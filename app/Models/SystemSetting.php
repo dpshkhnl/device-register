@@ -24,5 +24,8 @@ class SystemSetting extends Model
         'cta_secondary_url',
         'contact_email',
         'contact_phone',
+        'banner_text',
+        'banner_link_label',
+        'banner_link_url',
     ];
 }

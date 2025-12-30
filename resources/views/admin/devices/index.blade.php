@@ -11,32 +11,26 @@
     @endphp
 
     <div class="mx-auto max-w-6xl space-y-6">
-        @if (session('status'))
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-                {{ session('status') }}
-            </div>
-        @endif
-
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <x-ui.card>
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Devices</p>
-                <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $devices->total() }}</p>
-                <x-ui.badge class="mt-3" status="active" label="Registry count" />
+        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <x-ui.card class="p-3 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total Devices</p>
+                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $devices->total() }}</p>
+                <x-ui.badge class="mt-1 inline-flex justify-center" status="active" label="Registry count" />
             </x-ui.card>
-            <x-ui.card>
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active</p>
-                <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $activeCount }}</p>
-                <x-ui.badge class="mt-3" status="active" label="Live" />
+            <x-ui.card class="p-3 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Active</p>
+                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $activeCount }}</p>
+                <x-ui.badge class="mt-1 inline-flex justify-center" status="active" label="Live" />
             </x-ui.card>
-            <x-ui.card>
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Transferred</p>
-                <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $transferredCount }}</p>
-                <x-ui.badge class="mt-3" status="transferred" label="Ownership change" />
+            <x-ui.card class="p-3 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Transferred</p>
+                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $transferredCount }}</p>
+                <x-ui.badge class="mt-1 inline-flex justify-center" status="transferred" label="Ownership change" />
             </x-ui.card>
-            <x-ui.card>
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lost / Suspicious</p>
-                <p class="mt-3 text-3xl font-semibold text-slate-900">{{ $flaggedCount }}</p>
-                <x-ui.badge class="mt-3" status="lost" label="Needs review" />
+            <x-ui.card class="p-3 text-center">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Lost / Suspicious</p>
+                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $flaggedCount }}</p>
+                <x-ui.badge class="mt-1 inline-flex justify-center" status="lost" label="Needs review" />
             </x-ui.card>
         </div>
 
@@ -48,8 +42,37 @@
                 </div>
                 <div class="flex gap-2">
                     <button class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600">Export</button>
-                    <a class="rounded-lg bg-[color:var(--brand-600)] px-3 py-2 text-xs font-semibold text-white" href="{{ route('devices.create') }}">Add Device</a>
+                    <a class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800" href="{{ route('admin.devices.import') }}">Bulk Upload</a>
+                    <a class="rounded-lg bg-[color:var(--brand-600)] px-3 py-2 text-xs font-semibold text-white" href="{{ route('admin.devices.create') }}">Add Device</a>
                 </div>
+            </div>
+            <div class="border-b border-slate-200 bg-slate-50/60 px-6 py-4">
+                <form method="GET" action="{{ route('admin.devices.index') }}" class="grid gap-3 md:grid-cols-12">
+                    <div class="md:col-span-7">
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Search</label>
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ request('q') }}"
+                            placeholder="Search IMEI, brand, model, owner"
+                            class="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                        />
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</label>
+                        <select name="status" class="mt-2 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm">
+                            <option value="all" @selected(request('status', 'all') === 'all')>All</option>
+                            <option value="active" @selected(request('status') === 'active')>Active</option>
+                            <option value="transferred" @selected(request('status') === 'transferred')>Transferred</option>
+                            <option value="lost" @selected(request('status') === 'lost')>Lost / Missing</option>
+                            <option value="suspicious" @selected(request('status') === 'suspicious')>Suspicious</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end gap-2 md:col-span-2">
+                        <button class="h-10 w-full rounded-lg bg-[color:var(--brand-600)] px-3 text-xs font-semibold text-white">Filter</button>
+                        <a class="h-10 w-full rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 flex items-center justify-center" href="{{ route('admin.devices.index') }}">Reset</a>
+                    </div>
+                </form>
             </div>
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
@@ -85,7 +108,15 @@
                                 </button>
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <a class="text-xs font-semibold text-[color:var(--brand-600)]" href="{{ route('admin.devices.show', $device) }}">Review</a>
+                                <div class="flex items-center justify-end gap-3">
+                                    <form method="POST" action="{{ route('admin.devices.destroy', $device) }}" class="inline" data-delete-form>
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" data-delete-button>Delete</button>
+                                    </form>
+                                    <a class="text-xs font-semibold text-slate-500 hover:text-slate-700" href="{{ route('admin.devices.edit', $device) }}">Edit</a>
+                                    <a class="text-xs font-semibold text-[color:var(--brand-600)]" href="{{ route('admin.devices.show', $device) }}">Review</a>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -141,3 +172,36 @@
         <div>{{ $devices->links() }}</div>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Swal === 'undefined') {
+                return;
+            }
+            document.querySelectorAll('[data-delete-button]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const form = button.closest('[data-delete-form]');
+                    if (!form) {
+                        return;
+                    }
+                    Swal.fire({
+                        title: 'Delete this device?',
+                        text: 'This action cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, delete',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#dc2626',
+                        focusCancel: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+@endpush

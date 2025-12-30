@@ -19,26 +19,40 @@
             </div>
         @endif
 
-        <div class="space-y-4">
-            @foreach ($steps as $step)
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-slate-900">{{ $step->title }}</h3>
-                            <p class="text-sm text-slate-500">{{ $step->description }}</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('admin.home-steps.edit', $step) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm">Edit</a>
-                            <form method="POST" action="{{ route('admin.home-steps.destroy', $step) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button class="rounded-lg border border-rose-200 px-3 py-1.5 text-sm text-rose-600">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="mt-3 text-xs text-slate-400">Icon: {{ $step->icon }} • Order: {{ $step->sort_order }}</div>
-                </div>
-            @endforeach
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                        <th class="px-4 py-3">Title</th>
+                        <th class="px-4 py-3">Description</th>
+                        <th class="px-4 py-3">Icon</th>
+                        <th class="px-4 py-3">Order</th>
+                        <th class="px-4 py-3">Active</th>
+                        <th class="px-4 py-3 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach ($steps as $step)
+                        <tr>
+                            <td class="px-4 py-3 font-semibold text-slate-900">{{ $step->title }}</td>
+                            <td class="px-4 py-3 text-slate-600">{{ $step->description }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">{{ $step->icon ?? '-' }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">{{ $step->sort_order }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">{{ $step->is_active ? 'Yes' : 'No' }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('admin.home-steps.edit', $step) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs">Edit</a>
+                                    <form method="POST" action="{{ route('admin.home-steps.destroy', $step) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="rounded-lg border border-rose-200 px-3 py-1.5 text-xs text-rose-600">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

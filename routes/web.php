@@ -4,10 +4,17 @@ use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogControll
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
+use App\Http\Controllers\Admin\FooterLinkController as AdminFooterLinkController;
+use App\Http\Controllers\Admin\HomeFeatureController as AdminHomeFeatureController;
+use App\Http\Controllers\Admin\HomeBannerController as AdminHomeBannerController;
+use App\Http\Controllers\Admin\HomeStatController as AdminHomeStatController;
+use App\Http\Controllers\Admin\HomeStepController as AdminHomeStepController;
 use App\Http\Controllers\Admin\LostReportController as AdminLostReportController;
+use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SystemSettingController;
 use App\Models\Certificate;
@@ -18,8 +25,8 @@ use App\Models\TransferRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'pages.home')->name('home');
-Route::view('/verification', 'pages.verification')->name('verification');
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/verification', [DeviceController::class, 'verification'])->name('verification');
 
 Route::middleware('guest')->group(function () {
     Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
@@ -45,8 +52,23 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::put('users/{user}', [AdminUserController::class, 'update'])->name('users.update');
 
     Route::get('devices', [AdminDeviceController::class, 'index'])->name('devices.index');
+    Route::get('devices/create', [AdminDeviceController::class, 'create'])->name('devices.create');
+    Route::post('devices', [AdminDeviceController::class, 'store'])->name('devices.store');
+    Route::get('devices/import', [AdminDeviceController::class, 'import'])->name('devices.import');
+    Route::get('devices/import/template', [AdminDeviceController::class, 'downloadTemplate'])->name('devices.import.template');
+    Route::post('devices/import', [AdminDeviceController::class, 'importStore'])->name('devices.import.store');
+    Route::get('devices/{device}/edit', [AdminDeviceController::class, 'edit'])->name('devices.edit');
+    Route::put('devices/{device}/details', [AdminDeviceController::class, 'updateDetails'])->name('devices.update-details');
     Route::get('devices/{device}', [AdminDeviceController::class, 'show'])->name('devices.show');
+    Route::delete('devices/{device}', [AdminDeviceController::class, 'destroy'])->name('devices.destroy');
     Route::put('devices/{device}', [AdminDeviceController::class, 'update'])->name('devices.update');
+
+    Route::resource('home-features', AdminHomeFeatureController::class)->except('show');
+    Route::resource('home-steps', AdminHomeStepController::class)->except('show');
+    Route::resource('home-banners', AdminHomeBannerController::class)->except('show');
+    Route::resource('home-stats', AdminHomeStatController::class)->except('show');
+    Route::resource('testimonials', AdminTestimonialController::class)->except('show');
+    Route::resource('footer-links', AdminFooterLinkController::class)->except('show');
 
     Route::get('lost-stolen', [AdminLostReportController::class, 'index'])->name('lost-stolen.index');
     Route::put('lost-stolen/{report}', [AdminLostReportController::class, 'update'])->name('lost-stolen.update');
@@ -114,7 +136,13 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
             ->get()
             ->groupBy('group');
 
-        $imeiLogs = ImeiCheck::with('checkedBy')->latest()->paginate(10);
+        $search = request('q');
+
+        $imeiLogs = ImeiCheck::with('checkedBy')
+            ->when($search, fn($query) => $query->where('imei', 'like', "%{$search}%"))
+            ->latest()
+            ->paginate(10)
+            ->appends(['q' => $search]);
 
         return view('admin.imei-logs.index', compact('imeiLogs', 'settings', 'footerLinks'));
     })->name('imei-logs.index');

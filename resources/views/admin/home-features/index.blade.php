@@ -19,26 +19,42 @@
             </div>
         @endif
 
-        <div class="space-y-4">
-            @foreach ($features as $feature)
-                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-slate-900">{{ $feature->title }}</h3>
-                            <p class="text-sm text-slate-500">{{ $feature->description }}</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('admin.home-features.edit', $feature) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm">Edit</a>
-                            <form method="POST" action="{{ route('admin.home-features.destroy', $feature) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button class="rounded-lg border border-rose-200 px-3 py-1.5 text-sm text-rose-600">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="mt-3 text-xs text-slate-400">Icon: {{ $feature->icon }} • Button: {{ $feature->button_label }}</div>
-                </div>
-            @endforeach
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                        <th class="px-4 py-3">Title</th>
+                        <th class="px-4 py-3">Description</th>
+                        <th class="px-4 py-3">Icon</th>
+                        <th class="px-4 py-3">Button</th>
+                        <th class="px-4 py-3">Order</th>
+                        <th class="px-4 py-3">Active</th>
+                        <th class="px-4 py-3 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach ($features as $feature)
+                        <tr>
+                            <td class="px-4 py-3 font-semibold text-slate-900">{{ $feature->title }}</td>
+                            <td class="px-4 py-3 text-slate-600">{{ $feature->description }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">{{ $feature->icon ?? '-' }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">{{ $feature->button_label ?? '-' }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">{{ $feature->sort_order }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">{{ $feature->is_active ? 'Yes' : 'No' }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a href="{{ route('admin.home-features.edit', $feature) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs">Edit</a>
+                                    <form method="POST" action="{{ route('admin.home-features.destroy', $feature) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="rounded-lg border border-rose-200 px-3 py-1.5 text-xs text-rose-600">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

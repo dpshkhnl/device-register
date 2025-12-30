@@ -30,11 +30,17 @@
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-700">Primary Color</label>
-                        <input name="brand_primary" value="{{ old('brand_primary', $setting->brand_primary) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                        <div class="mt-2 flex items-center gap-3">
+                            <input type="color" name="brand_primary" value="{{ old('brand_primary', $setting->brand_primary) ?? '#1d4ed8' }}" class="h-10 w-12 rounded-lg border border-slate-200 p-1" />
+                            <input name="brand_primary" value="{{ old('brand_primary', $setting->brand_primary) }}" class="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+                        </div>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-slate-700">Secondary Color</label>
-                        <input name="brand_secondary" value="{{ old('brand_secondary', $setting->brand_secondary) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                        <div class="mt-2 flex items-center gap-3">
+                            <input type="color" name="brand_secondary" value="{{ old('brand_secondary', $setting->brand_secondary) ?? '#dbeafe' }}" class="h-10 w-12 rounded-lg border border-slate-200 p-1" />
+                            <input name="brand_secondary" value="{{ old('brand_secondary', $setting->brand_secondary) }}" class="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm" />
+                        </div>
                     </div>
                 </div>
             </div>

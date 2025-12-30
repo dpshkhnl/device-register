@@ -21,7 +21,7 @@
             <p class="text-lg text-muted-foreground">Enter a 15-digit IMEI number to check device status and ownership</p>
         </div>
 
-        <form class="mb-10">
+        <form class="mb-10" method="GET" action="{{ route('verification') }}">
             <div class="rounded-2xl border border-border bg-card p-6 shadow-soft sm:p-8">
                 <label for="imei" class="mb-2 block text-sm font-medium text-foreground">IMEI Number</label>
                 <div class="flex flex-col gap-3 sm:flex-row">
@@ -36,49 +36,79 @@
                             type="text"
                             placeholder="Enter 15-digit IMEI"
                             class="h-14 w-full rounded-xl border border-border bg-background pl-12 text-lg font-mono shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            inputmode="numeric"
+                            pattern="[0-9]{15}"
+                            minlength="15"
                             maxlength="15"
+                            value="{{ old('imei', $imei ?? '') }}"
                         />
                     </div>
                     <button type="submit" class="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground shadow-soft hover:bg-primary/90">
                         Verify IMEI
                     </button>
                 </div>
+                @error('imei')
+                    <p class="mt-3 text-sm text-rose-600">{{ $message }}</p>
+                @enderror
                 <p class="mt-3 text-sm text-muted-foreground">Enter the 15-digit IMEI number found on your device packaging.</p>
             </div>
         </form>
 
-        <div class="rounded-2xl border border-border bg-card p-6 shadow-soft sm:p-8">
-            <div class="mb-6 flex items-center gap-3">
-                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-success/10">
-                    <svg class="h-6 w-6 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
+        @if ($result === 'found')
+            <div class="rounded-2xl border border-border bg-card p-6 shadow-soft sm:p-8">
+                <div class="mb-6 flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-success/10">
+                        <svg class="h-6 w-6 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-foreground">Device Found</h2>
+                        <p class="text-sm text-muted-foreground">Verified on {{ now()->format('M d, Y') }}</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 class="text-lg font-bold text-foreground">Device Found</h2>
-                    <p class="text-sm text-muted-foreground">Verified on Dec 20, 2024</p>
-                </div>
-            </div>
 
-            <div class="space-y-4">
-                <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
-                    <span class="text-sm text-muted-foreground">IMEI</span>
-                    <span class="font-mono text-sm font-medium text-foreground">3534********2345</span>
-                </div>
-                <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
-                    <span class="text-sm text-muted-foreground">Device</span>
-                    <span class="text-sm font-medium text-foreground">Apple iPhone 15 Pro</span>
-                </div>
-                <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
-                    <span class="text-sm text-muted-foreground">Owner</span>
-                    <span class="text-sm font-medium text-foreground">J*** D***</span>
-                </div>
-                <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
-                    <span class="text-sm text-muted-foreground">Status</span>
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">Active</span>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                        <span class="text-sm text-muted-foreground">IMEI</span>
+                        <span class="font-mono text-sm font-medium text-foreground">
+                            {{ substr($device->imei, 0, 4) }}********{{ substr($device->imei, -4) }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                        <span class="text-sm text-muted-foreground">Device</span>
+                        <span class="text-sm font-medium text-foreground">{{ $device->brand }} {{ $device->model }}</span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                        <span class="text-sm text-muted-foreground">Owner</span>
+                        <span class="text-sm font-medium text-foreground">{{ $device->currentOwner?->name ?? 'Registered User' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-3">
+                        <span class="text-sm text-muted-foreground">Status</span>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
+                            {{ ucfirst($device->status) }}
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
+        @elseif ($result === 'not_found')
+            <div class="rounded-2xl border border-border bg-card p-6 shadow-soft sm:p-8">
+                <div class="mb-6 flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100">
+                        <svg class="h-6 w-6 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-foreground">No device found</h2>
+                        <p class="text-sm text-muted-foreground">We could not locate this IMEI in the registry.</p>
+                    </div>
+                </div>
+                <div class="rounded-lg bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+                    Please double-check the IMEI number or register the device first.
+                </div>
+            </div>
+        @endif
     </div>
 </section>
 @endsection

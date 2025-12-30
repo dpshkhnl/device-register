@@ -35,7 +35,11 @@
                         type="text"
                         name="imei"
                         placeholder="Enter 15-digit IMEI"
+                        inputmode="numeric"
+                        pattern="[0-9]{15}"
+                        minlength="15"
                         maxlength="15"
+                        required
                         value="{{ old('imei') }}"
                         class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-base font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />

@@ -31,6 +31,9 @@ class SystemSettingRequest extends FormRequest
             'cta_secondary_url' => ['required', 'string', 'max:255'],
             'contact_email' => ['nullable', 'email', 'max:120'],
             'contact_phone' => ['nullable', 'string', 'max:30'],
+            'banner_text' => ['nullable', 'string', 'max:160'],
+            'banner_link_label' => ['nullable', 'string', 'max:60'],
+            'banner_link_url' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

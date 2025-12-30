@@ -108,6 +108,63 @@
         </div>
 
         <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Frontend</p>
+            <div class="space-y-1">
+                <a href="{{ route('admin.settings.edit') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.settings.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a7.98 7.98 0 0 0 .1-2 7.98 7.98 0 0 0-.1-2l2.06-1.6-2-3.46-2.42.98a8.08 8.08 0 0 0-3.46-2l-.37-2.6h-4l-.37 2.6a8.08 8.08 0 0 0-3.46 2l-2.42-.98-2 3.46L4.5 11a7.98 7.98 0 0 0-.1 2 7.98 7.98 0 0 0 .1 2l-2.06 1.6 2 3.46 2.42-.98a8.08 8.08 0 0 0 3.46 2l.37 2.6h4l.37-2.6a8.08 8.08 0 0 0 3.46-2l2.42.98 2-3.46L19.4 15z"/>
+                    </svg>
+                    Hero & CTA
+                </a>
+                <a href="{{ route('admin.home-banners.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.home-banners.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h16" />
+                    </svg>
+                    Banner Slider
+                </a>
+                <a href="{{ route('admin.home-features.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.home-features.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
+                    </svg>
+                    Features
+                </a>
+                <a href="{{ route('admin.home-steps.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.home-steps.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10" />
+                    </svg>
+                    Steps
+                </a>
+                <a href="{{ route('admin.home-stats.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.home-stats.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18v6H3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 9v12m5-12v12m5-12v12"/>
+                    </svg>
+                    Stats
+                </a>
+                <a href="{{ route('admin.testimonials.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.testimonials.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 9h8M8 13h6M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7l-4 3V7a2 2 0 0 1 2-2z" />
+                    </svg>
+                    Testimonials
+                </a>
+                <a href="{{ route('admin.footer-links.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.footer-links.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    Footer Links
+                </a>
+            </div>
+        </div>
+
+        <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">System</p>
             <div class="space-y-1">
                 <a href="{{ route('admin.activity-logs.index') }}"
@@ -125,14 +182,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
                     </svg>
                     Security & Access
-                </a>
-                <a href="{{ route('admin.settings.edit') }}"
-                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.settings.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
-                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a7.98 7.98 0 0 0 .1-2 7.98 7.98 0 0 0-.1-2l2.06-1.6-2-3.46-2.42.98a8.08 8.08 0 0 0-3.46-2l-.37-2.6h-4l-.37 2.6a8.08 8.08 0 0 0-3.46 2l-2.42-.98-2 3.46L4.5 11a7.98 7.98 0 0 0-.1 2 7.98 7.98 0 0 0 .1 2l-2.06 1.6 2 3.46 2.42-.98a8.08 8.08 0 0 0 3.46 2l.37 2.6h4l.37-2.6a8.08 8.08 0 0 0 3.46-2l2.42.98 2-3.46L19.4 15z"/>
-                    </svg>
-                    Settings
                 </a>
             </div>
         </div>

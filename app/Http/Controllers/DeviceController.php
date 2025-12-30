@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Models\ImeiCheck;
 use Illuminate\Http\Request;
 
 class DeviceController extends Controller
@@ -80,5 +81,31 @@ class DeviceController extends Controller
         }
 
         return view('pages.device-show', compact('device'));
+    }
+
+    public function verification(Request $request)
+    {
+        $imei = $request->input('imei');
+        $device = null;
+        $result = null;
+
+        if ($imei !== null && $imei !== '') {
+            $request->validate([
+                'imei' => ['required', 'digits:15'],
+            ]);
+
+            $device = Device::with('currentOwner')->where('imei', $imei)->first();
+            $result = $device ? 'found' : 'not_found';
+
+            ImeiCheck::create([
+                'imei' => $imei,
+                'checked_by_user_id' => $request->user()?->id,
+                'channel' => 'portal',
+                'result' => $result,
+                'status_returned' => $device?->status,
+            ]);
+        }
+
+        return view('pages.verification', compact('imei', 'device', 'result'));
     }
 }

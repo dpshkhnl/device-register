@@ -1,12 +1,15 @@
 <header class="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
     <div class="container flex h-16 items-center justify-between">
+        @php
+            $appName = $settings?->app_name ?? 'DRMS';
+        @endphp
         <a href="{{ route('home') }}" class="flex items-center gap-2.5">
             <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <svg class="h-5 w-5 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
                 </svg>
             </div>
-            <span class="text-xl font-bold text-foreground">DRMS</span>
+            <span class="text-xl font-bold text-foreground">{{ $appName }}</span>
         </a>
 
         <nav class="hidden items-center gap-8 md:flex">
