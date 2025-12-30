@@ -33,7 +33,7 @@
             <div x-show="active === {{ $index }}" x-transition.opacity class="flex flex-col items-start justify-between gap-3 text-sm text-foreground sm:flex-row sm:items-center">
                 <div class="flex items-center gap-3">
                     @if (data_get($banner, 'image_url'))
-                        <img src="{{ data_get($banner, 'image_url') }}" alt="Banner" class="h-8 w-8 rounded-lg border border-border bg-white p-1" />
+                        <img src="{{ asset('storage/' . data_get($banner, 'image_url')) }}" alt="Banner" class="h-8 w-8 rounded-lg border border-border bg-white p-1" />
                     @endif
                     <div>
                         <p class="font-semibold">{{ data_get($banner, 'title') }}</p>

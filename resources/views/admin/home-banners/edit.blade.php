@@ -10,7 +10,7 @@
             <h1 class="text-2xl font-semibold text-slate-900">Edit Banner</h1>
         </div>
 
-        <form method="POST" action="{{ route('admin.home-banners.update', $banner) }}" class="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <form method="POST" action="{{ route('admin.home-banners.update', $banner) }}" enctype="multipart/form-data" class="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             @csrf
             @method('PUT')
             @include('admin.home-banners.form', ['banner' => $banner])

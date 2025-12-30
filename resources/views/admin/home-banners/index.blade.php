@@ -42,7 +42,16 @@
                                 {{ $banner->link_label ?? '-' }}<br />
                                 <span class="text-slate-400">{{ $banner->link_url ?? '-' }}</span>
                             </td>
-                            <td class="px-4 py-3 text-xs text-slate-600">{{ $banner->image_url ?? '-' }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-600">
+                                @if ($banner->image_url)
+                                    <div class="flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $banner->image_url) }}" alt="Banner image" class="h-8 w-8 rounded-lg object-cover" />
+                                        <span class="text-slate-500">{{ $banner->image_url }}</span>
+                                    </div>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-xs text-slate-600">{{ $banner->sort_order }}</td>
                             <td class="px-4 py-3 text-xs text-slate-600">{{ $banner->is_active ? 'Yes' : 'No' }}</td>
                             <td class="px-4 py-3 text-right">
