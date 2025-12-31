@@ -9,6 +9,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-background text-foreground">
@@ -22,5 +23,44 @@
 
             @include('partials.footer')
         </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('form[data-swal-confirm]').forEach((form) => {
+                    form.addEventListener('submit', (event) => {
+                        if (form.dataset.swalConfirmed === 'true') {
+                            return;
+                        }
+                        event.preventDefault();
+
+                        const title = form.dataset.swalTitle || 'Are you sure?';
+                        const text = form.dataset.swalText || '';
+                        const confirmText = form.dataset.swalConfirm || 'Yes, continue';
+                        const cancelText = form.dataset.swalCancel || 'Cancel';
+
+                        const proceed = () => {
+                            form.dataset.swalConfirmed = 'true';
+                            form.submit();
+                        };
+
+                        if (window.Swal) {
+                            Swal.fire({
+                                title,
+                                text,
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: confirmText,
+                                cancelButtonText: cancelText,
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    proceed();
+                                }
+                            });
+                        } else if (confirm(`${title}${text ? '\n' + text : ''}`)) {
+                            proceed();
+                        }
+                    });
+                });
+            });
+        </script>
     </body>
 </html>

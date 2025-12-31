@@ -1,25 +1,51 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+@extends('layouts.app')
+
+@section('content')
+<section class="py-12 lg:py-16">
+    <div class="container max-w-5xl">
+        <div class="grid overflow-hidden rounded-3xl border border-border bg-card shadow-soft lg:grid-cols-2">
+            <div class="relative hidden bg-muted/40 p-10 lg:block">
+                <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent"></div>
+                <div class="relative z-10 flex h-full flex-col justify-between">
+                    <div>
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                            <svg class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
+                            </svg>
+                        </div>
+                        <h1 class="mt-6 text-3xl font-bold text-foreground">Reset your password</h1>
+                        <p class="mt-3 text-sm text-muted-foreground">We will send you a secure password reset link.</p>
+                    </div>
+                    <img src="/images/auth-login.svg" alt="Reset password illustration" class="mt-10 w-full max-w-sm" />
+                </div>
+            </div>
+            <div class="p-6 sm:p-10">
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-semibold text-foreground">Forgot password</h2>
+                    <p class="text-sm text-muted-foreground">Enter your email to receive a reset link.</p>
+                </div>
+
+                <x-auth-session-status class="mt-4" :status="session('status')" />
+
+                @if ($errors->any())
+                    <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        Please check the email and try again.
+                    </div>
+                @endif
+
+                <form class="mt-6 space-y-4" method="POST" action="{{ route('password.email') }}">
+                    @csrf
+                    <div>
+                        <label class="text-sm font-medium text-foreground" for="email">Email</label>
+                        <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm" />
+                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    </div>
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90">
+                        Email Password Reset Link
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
-    <form method="POST" action="{{ route('password.email') }}">
-        @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+</section>
+@endsection

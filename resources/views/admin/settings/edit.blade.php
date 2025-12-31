@@ -119,6 +119,17 @@
                 </div>
             </div>
 
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-900">Security</h2>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">OTP Resend Delay (seconds)</label>
+                        <input type="number" min="10" max="600" name="otp_resend_seconds" value="{{ old('otp_resend_seconds', $setting->otp_resend_seconds ?? 60) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                        <p class="mt-2 text-xs text-slate-400">Set how long users must wait before resending OTP.</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end">
                 <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Save Settings</button>
             </div>

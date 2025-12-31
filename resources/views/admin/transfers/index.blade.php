@@ -7,7 +7,7 @@
         $transferItems = $transfers->getCollection();
         $pendingCount = $transferItems->where('status', 'pending')->count();
         $acceptedCount = $transferItems->where('status', 'accepted')->count();
-        $rejectedCount = $transferItems->where('status', 'rejected')->count();
+        $rejectedCount = $transferItems->whereIn('status', ['rejected', 'cancelled'])->count();
     @endphp
 
     <div class="mx-auto max-w-6xl space-y-6">
@@ -58,7 +58,7 @@
                             <td class="px-4 py-3 text-sm text-slate-600">{{ $transfer->fromUser?->name ?? '—' }}</td>
                             <td class="px-4 py-3 text-sm text-slate-600">{{ $transfer->toUser?->name ?? $transfer->to_mobile }}</td>
                             <td class="px-4 py-3">
-                                <x-ui.badge status="{{ $transfer->status === 'accepted' ? 'active' : ($transfer->status === 'rejected' ? 'lost' : 'suspicious') }}" label="{{ ucfirst($transfer->status) }}" />
+                                <x-ui.badge status="{{ $transfer->status === 'accepted' ? 'active' : (in_array($transfer->status, ['rejected', 'cancelled'], true) ? 'lost' : 'suspicious') }}" label="{{ ucfirst($transfer->status) }}" />
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <button class="text-xs font-semibold text-[color:var(--brand-600)]">Review</button>

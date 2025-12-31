@@ -34,6 +34,7 @@ class SystemSettingRequest extends FormRequest
             'banner_text' => ['nullable', 'string', 'max:160'],
             'banner_link_label' => ['nullable', 'string', 'max:60'],
             'banner_link_url' => ['nullable', 'string', 'max:255'],
+            'otp_resend_seconds' => ['nullable', 'integer', 'min:10', 'max:600'],
         ];
     }
 }

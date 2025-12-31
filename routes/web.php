@@ -17,6 +17,7 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SystemSettingController;
+use App\Http\Controllers\TransferController;
 use App\Models\Certificate;
 use App\Models\FooterLink;
 use App\Models\ImeiCheck;
@@ -39,7 +40,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/devices/create', [DeviceController::class, 'create'])->name('devices.create');
     Route::post('/devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::get('/devices/{device}', [DeviceController::class, 'show'])->name('devices.show');
-    Route::view('/transfer', 'pages.transfer')->name('transfer');
+    Route::get('/transfer', [TransferController::class, 'create'])->name('transfer');
+    Route::post('/transfer/otp', [TransferController::class, 'sendOtp'])->name('transfer.otp');
+    Route::post('/transfer/verify-new', [TransferController::class, 'verifyNewOtp'])->name('transfer.verify.new');
+    Route::post('/transfer/verify-old', [TransferController::class, 'verifyOldOtp'])->name('transfer.verify.old');
+    Route::post('/transfer', [TransferController::class, 'store'])->name('transfer.store');
+    Route::post('/transfer/{transfer}/accept', [TransferController::class, 'accept'])->name('transfer.accept');
+    Route::post('/transfer/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfer.cancel');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
