@@ -15,6 +15,7 @@
         <nav class="hidden items-center gap-8 md:flex">
             <a href="{{ route('home') }}" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Home</a>
             <a href="{{ route('verification') }}" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">IMEI Verification</a>
+            <a href="{{ route('packages.index') }}" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Packages</a>
             <a href="{{ route('transfer') }}" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Transfer</a>
             <a href="{{ route('lost-found.index') }}" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Lost / Found</a>
             @auth
@@ -48,6 +49,7 @@
                 <nav class="container flex flex-col gap-1 py-4">
                     <a href="{{ route('home') }}" class="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">Home</a>
                     <a href="{{ route('verification') }}" class="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">IMEI Verification</a>
+                    <a href="{{ route('packages.index') }}" class="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">Packages</a>
                     <a href="{{ route('transfer') }}" class="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">Transfer</a>
                     <a href="{{ route('lost-found.index') }}" class="rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">Lost / Found</a>
                     @auth

@@ -42,6 +42,15 @@ class DeviceController extends Controller
 
     public function store(Request $request)
     {
+        $userPackage = $request->user()->activePackage()->first();
+        if (! $userPackage) {
+            return back()->withErrors(['imei' => 'You need an active package to register devices.'])->withInput();
+        }
+
+        if ($userPackage->remainingDevices() <= 0) {
+            return back()->withErrors(['imei' => 'Your device limit has been reached. Please upgrade your package.'])->withInput();
+        }
+
         $validated = $request->validate([
             'imei' => ['required', 'digits:15', 'unique:devices,imei'],
             'brand' => ['required', 'string', 'max:100'],
@@ -69,6 +78,8 @@ class DeviceController extends Controller
             'status' => 'active',
         ]);
 
+        $userPackage->increment('used_device_count');
+
         return redirect()
             ->route('devices.show', $device)
             ->with('status', 'Device registered successfully.');
@@ -94,6 +105,17 @@ class DeviceController extends Controller
                 'imei' => ['required', 'digits:15'],
             ]);
 
+            if ($request->user()) {
+                $userPackage = $request->user()->activePackage()->first();
+                if (! $userPackage) {
+                    return back()->withErrors(['imei' => 'You need an active package to verify IMEI.'])->withInput();
+                }
+
+                if ($userPackage->remainingImeiChecks() <= 0) {
+                    return back()->withErrors(['imei' => 'Your IMEI verification limit has been reached.'])->withInput();
+                }
+            }
+
             $device = Device::with('currentOwner')->where('imei', $imei)->first();
             $result = $device ? 'found' : 'not_found';
 
@@ -104,6 +126,10 @@ class DeviceController extends Controller
                 'result' => $result,
                 'status_returned' => $device?->status,
             ]);
+
+            if ($request->user()) {
+                $request->user()->activePackage()->first()?->increment('used_imei_count');
+            }
         }
 
         return view('pages.verification', compact('imei', 'device', 'result'));

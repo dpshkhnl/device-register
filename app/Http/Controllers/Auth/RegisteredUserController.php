@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Package;
 use App\Models\User;
+use App\Models\UserPackage;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,6 +45,26 @@ class RegisteredUserController extends Controller
             'role' => User::ROLE_USER,
             'password' => Hash::make($request->password),
         ]);
+
+        $trialPackage = Package::where('is_trial', true)
+            ->where('is_active', true)
+            ->first();
+
+        if ($trialPackage) {
+            $endsAt = $trialPackage->duration_days
+                ? now()->addDays($trialPackage->duration_days)
+                : null;
+
+            UserPackage::create([
+                'user_id' => $user->id,
+                'package_id' => $trialPackage->id,
+                'device_limit' => $trialPackage->device_limit,
+                'imei_limit' => $trialPackage->imei_limit,
+                'starts_at' => now(),
+                'ends_at' => $endsAt,
+                'status' => 'active',
+            ]);
+        }
 
         event(new Registered($user));
 

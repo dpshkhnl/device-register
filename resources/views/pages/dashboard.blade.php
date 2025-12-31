@@ -52,6 +52,24 @@
             @endforeach
         </div>
 
+        @if ($activePackage)
+            <div class="mb-8 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Package</p>
+                        <h3 class="mt-2 text-lg font-semibold text-foreground">{{ $activePackage->package->name }}</h3>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Devices: {{ $activePackage->used_device_count }}/{{ $activePackage->device_limit }} ·
+                            IMEI checks: {{ $activePackage->used_imei_count }}/{{ $activePackage->imei_limit }}
+                        </p>
+                    </div>
+                    <a href="{{ route('packages.index') }}" class="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted">
+                        Manage Packages
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <div class="space-y-6">
             <div>
                 <h2 class="text-lg font-bold text-foreground">Your Devices</h2>

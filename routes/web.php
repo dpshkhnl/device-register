@@ -10,12 +10,14 @@ use App\Http\Controllers\Admin\HomeBannerController as AdminHomeBannerController
 use App\Http\Controllers\Admin\HomeStatController as AdminHomeStatController;
 use App\Http\Controllers\Admin\HomeStepController as AdminHomeStepController;
 use App\Http\Controllers\Admin\LostReportController as AdminLostReportController;
+use App\Http\Controllers\Admin\PackageController as AdminPackageController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LostFoundController;
+use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\TransferController;
@@ -29,6 +31,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/verification', [DeviceController::class, 'verification'])->name('verification');
+Route::get('/packages', [PackageController::class, 'index'])->name('packages.index');
 
 Route::middleware('guest')->group(function () {
     Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
@@ -50,6 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/transfer/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfer.cancel');
     Route::get('/lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
     Route::post('/lost-found', [LostFoundController::class, 'store'])->name('lost-found.store');
+    Route::post('/packages/{package}/purchase', [PackageController::class, 'purchase'])->name('packages.purchase');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -79,6 +83,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::resource('home-stats', AdminHomeStatController::class)->except('show');
     Route::resource('testimonials', AdminTestimonialController::class)->except('show');
     Route::resource('footer-links', AdminFooterLinkController::class)->except('show');
+    Route::resource('packages', AdminPackageController::class)->except('show');
 
     Route::get('lost-stolen', [AdminLostReportController::class, 'index'])->name('lost-stolen.index');
     Route::put('lost-stolen/{report}', [AdminLostReportController::class, 'update'])->name('lost-stolen.update');

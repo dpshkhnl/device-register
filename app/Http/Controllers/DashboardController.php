@@ -47,6 +47,8 @@ class DashboardController extends Controller
             'pending_transfers' => $pendingTransfers->count() + $outgoingPendingTransfers->count(),
         ];
 
-        return view('pages.dashboard', compact('devices', 'stats', 'pendingTransfers', 'outgoingPendingTransfers', 'recentTransfers'));
+        $activePackage = $user->activePackage()->with('package')->first();
+
+        return view('pages.dashboard', compact('devices', 'stats', 'pendingTransfers', 'outgoingPendingTransfers', 'recentTransfers', 'activePackage'));
     }
 }

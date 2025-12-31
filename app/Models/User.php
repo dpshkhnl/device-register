@@ -67,4 +67,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(LostReport::class, 'reporter_user_id');
     }
+
+    public function userPackages()
+    {
+        return $this->hasMany(UserPackage::class);
+    }
+
+    public function activePackage()
+    {
+        return $this->hasOne(UserPackage::class)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+            })
+            ->latest('starts_at');
+    }
 }
