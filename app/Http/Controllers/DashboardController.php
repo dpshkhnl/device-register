@@ -43,6 +43,7 @@ class DashboardController extends Controller
         $stats = [
             'registered' => $devices->count(),
             'active' => $devices->where('status', 'active')->count(),
+            'lost' => $devices->where('status', 'lost')->count(),
             'pending_transfers' => $pendingTransfers->count() + $outgoingPendingTransfers->count(),
         ];
 

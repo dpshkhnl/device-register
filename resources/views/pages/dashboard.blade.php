@@ -8,19 +8,34 @@
                 <h1 class="text-2xl font-bold text-foreground sm:text-3xl">Dashboard</h1>
                 <p class="text-muted-foreground">Manage your devices and transfers</p>
             </div>
-            <a href="{{ route('register-device') }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
-                </svg>
-                Register Device
-            </a>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('transfer') }}" class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10m0 0-3-3m3 3-3 3M17 17H7m0 0 3 3m-3-3 3-3" />
+                    </svg>
+                    Transfer
+                </a>
+                <a href="{{ route('lost-found.index') }}" class="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
+                    </svg>
+                    Lost / Found
+                </a>
+                <a href="{{ route('register-device') }}" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                    Register Device
+                </a>
+            </div>
         </div>
 
-        <div class="mb-8 grid gap-4 sm:grid-cols-3">
+        <div class="mb-8 grid gap-4 sm:grid-cols-4">
             @foreach ([
                 ['label' => 'Registered Devices', 'value' => $stats['registered']],
                 ['label' => 'Pending Transfers', 'value' => $stats['pending_transfers']],
                 ['label' => 'Active Devices', 'value' => $stats['active']],
+                ['label' => 'Lost / Stolen', 'value' => $stats['lost']],
             ] as $stat)
                 <div class="flex items-center gap-4 rounded-xl border border-border bg-card p-5 shadow-soft">
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
@@ -40,49 +55,44 @@
         <div class="space-y-6">
             <div>
                 <h2 class="text-lg font-bold text-foreground">Your Devices</h2>
-                <p class="text-sm text-muted-foreground">Recent registrations and status updates.</p>
+                <p class="text-sm text-muted-foreground">Latest registrations with live status.</p>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                @forelse ($devices as $device)
-                    <div class="rounded-xl border border-border bg-card p-5 shadow-soft">
-                        <div class="mb-4 flex items-start justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
-                                    <svg class="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                        <rect x="6" y="3" width="12" height="18" rx="2" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 17h4" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-foreground">{{ $device->brand }}</h3>
-                                    <p class="text-sm text-muted-foreground">{{ $device->model }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-4 space-y-2">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-muted-foreground">IMEI</span>
-                                <span class="font-mono text-foreground">{{ substr($device->imei, 0, 4) }}***{{ substr($device->imei, -4) }}</span>
-                            </div>
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-muted-foreground">Status</span>
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">{{ ucfirst($device->status) }}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between border-t border-border pt-4">
-                            <span class="text-xs font-semibold text-muted-foreground">{{ $device->purchase_date?->format('M d, Y') ?? 'Registered' }}</span>
-                            <a href="{{ route('devices.show', $device) }}" class="text-sm font-medium text-primary hover:underline">Details</a>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-full rounded-xl border border-dashed border-border bg-card p-10 text-center">
-                        <p class="text-sm text-muted-foreground">No devices registered yet.</p>
-                        <a href="{{ route('register-device') }}" class="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-                            Register your first device
-                        </a>
-                    </div>
-                @endforelse
+            <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-muted text-xs uppercase tracking-wider text-muted-foreground">
+                        <tr>
+                            <th class="px-4 py-3">Device</th>
+                            <th class="px-4 py-3">IMEI</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        @forelse ($devices as $device)
+                            <tr>
+                                <td class="px-4 py-3 font-semibold text-foreground">
+                                    {{ $device->brand }} {{ $device->model }}
+                                </td>
+                                <td class="px-4 py-3 font-mono text-xs text-muted-foreground">
+                                    {{ substr($device->imei, 0, 4) }}***{{ substr($device->imei, -4) }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $device->status === 'lost' ? 'bg-rose-100 text-rose-700' : 'bg-muted text-muted-foreground' }}">
+                                        {{ ucfirst($device->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <a href="{{ route('devices.show', $device) }}" class="text-sm font-medium text-primary hover:underline">View</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="px-4 py-8 text-center text-sm text-muted-foreground">No devices registered yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
 
             <div class="grid gap-4 lg:grid-cols-2">
