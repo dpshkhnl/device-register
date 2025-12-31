@@ -28,5 +28,6 @@ class SystemSetting extends Model
         'banner_link_label',
         'banner_link_url',
         'otp_resend_seconds',
+        'auth_force_otp',
     ];
 }

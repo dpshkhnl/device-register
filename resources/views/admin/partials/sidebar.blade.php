@@ -183,6 +183,14 @@
                     </svg>
                     Activity Log
                 </a>
+                <a href="{{ route('admin.service-areas.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.service-areas.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l6 3v6c0 5-4 8-6 9-2-1-6-4-6-9V6l6-3z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 11h6m-6 4h4"/>
+                    </svg>
+                    Service Areas
+                </a>
                 <a href="{{ route('admin.security.index') }}"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.security.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
                     <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

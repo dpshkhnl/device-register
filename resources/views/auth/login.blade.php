@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $otpEnabled = $otpEnabled ?? false;
+    $serviceAreas = $serviceAreas ?? collect();
+    $defaultDialCode = $defaultDialCode ?? '+977';
+    $showOtp = $otpEnabled && (old('otp') || $errors->has('otp') || session('otp_purpose') === 'auth_login' || session('dev_otp_login'));
+@endphp
 <section class="py-12 lg:py-16">
     <div class="container max-w-5xl">
         <div class="grid overflow-hidden rounded-3xl border border-border bg-card shadow-soft lg:grid-cols-2">
@@ -35,16 +41,60 @@
 
                 <form class="mt-6 space-y-4" method="POST" action="{{ route('login') }}">
                     @csrf
-                    <div>
-                        <label class="text-sm font-medium text-foreground" for="email">Email</label>
-                        <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm" />
-                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm font-medium text-foreground" for="email">Email (optional)</label>
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="username" placeholder="name@example.com" class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm" />
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-foreground" for="mobile">Mobile Number</label>
+                            <div class="mt-2 grid gap-3 sm:grid-cols-[140px,1fr]">
+                                <select id="country_code" name="country_code" class="h-12 rounded-lg border border-border bg-background px-3 text-sm">
+                                    @forelse ($serviceAreas as $serviceArea)
+                                        <option value="{{ $serviceArea->dial_code }}" {{ old('country_code', $defaultDialCode) === $serviceArea->dial_code ? 'selected' : '' }}>
+                                            {{ $serviceArea->name }} ({{ $serviceArea->dial_code }})
+                                        </option>
+                                    @empty
+                                        <option value="+977">Nepal (+977)</option>
+                                    @endforelse
+                                </select>
+                                <input id="mobile" type="text" name="mobile" value="{{ old('mobile') }}" autocomplete="tel" placeholder="98XXXXXXXX" class="h-12 rounded-lg border border-border bg-background px-4 text-sm" />
+                            </div>
+                            <p class="mt-2 text-xs text-muted-foreground">Use email or mobile. Mobile requires country code.</p>
+                            <x-input-error :messages="$errors->get('login')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('mobile')" class="mt-2" />
+                        </div>
                     </div>
-                    <div>
+                    <div id="password-panel" class="{{ $showOtp ? 'hidden' : '' }}">
                         <label class="text-sm font-medium text-foreground" for="password">Password</label>
-                        <input id="password" type="password" name="password" required autocomplete="current-password" class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm" />
+                        <input id="password" type="password" name="password" autocomplete="current-password" class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm" />
+                        <p class="mt-2 text-xs text-muted-foreground">Use password or sign in with OTP.</p>
                         <x-input-error :messages="$errors->get('password')" class="mt-2" />
                     </div>
+                    @if ($otpEnabled)
+                        <div>
+                            <button type="button" id="otp-toggle" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground">
+                                Sign in with OTP
+                            </button>
+                        </div>
+                        <div id="otp-panel" class="{{ $showOtp ? '' : 'hidden' }} rounded-xl border border-border bg-muted/30 p-4">
+                            <label class="text-sm font-medium text-foreground" for="otp">OTP</label>
+                            <div class="mt-2 flex flex-wrap gap-3">
+                                <input id="otp" type="text" name="otp" value="{{ old('otp') }}" autocomplete="one-time-code" class="h-11 flex-1 rounded-lg border border-border bg-background px-3 text-sm" />
+                                <button type="submit" formaction="{{ route('login.otp') }}" formmethod="POST" class="inline-flex h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold text-foreground">
+                                    Send OTP
+                                </button>
+                            </div>
+                            @if (session('dev_otp_login'))
+                                <p class="mt-2 text-xs text-amber-600">Dev OTP: {{ session('dev_otp_login') }}</p>
+                            @endif
+                            @if (session('otp_cooldown') && session('otp_purpose') === 'auth_login')
+                                <p class="mt-2 text-xs text-rose-600">Resend available in {{ session('otp_cooldown') }}s</p>
+                            @endif
+                            <x-input-error :messages="$errors->get('otp')" class="mt-2" />
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between text-sm">
                         <label class="inline-flex items-center gap-2 text-muted-foreground">
                             <input type="checkbox" name="remember" class="h-4 w-4 rounded border-border" />
@@ -65,4 +115,30 @@
         </div>
     </div>
 </section>
+@if ($otpEnabled)
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggle = document.getElementById('otp-toggle');
+            const panel = document.getElementById('otp-panel');
+            const passwordPanel = document.getElementById('password-panel');
+            if (!toggle || !panel || !passwordPanel) {
+                return;
+            }
+
+            const updateLabel = () => {
+                toggle.textContent = panel.classList.contains('hidden')
+                    ? 'Sign in with OTP'
+                    : 'Hide OTP';
+            };
+
+            toggle.addEventListener('click', () => {
+                panel.classList.toggle('hidden');
+                passwordPanel.classList.toggle('hidden');
+                updateLabel();
+            });
+
+            updateLabel();
+        });
+    </script>
+@endif
 @endsection

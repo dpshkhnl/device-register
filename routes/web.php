@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\HomeStatController as AdminHomeStatController;
 use App\Http\Controllers\Admin\HomeStepController as AdminHomeStepController;
 use App\Http\Controllers\Admin\LostReportController as AdminLostReportController;
 use App\Http\Controllers\Admin\PackageController as AdminPackageController;
+use App\Http\Controllers\Admin\ServiceAreaController as AdminServiceAreaController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardController;
@@ -84,6 +85,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::resource('testimonials', AdminTestimonialController::class)->except('show');
     Route::resource('footer-links', AdminFooterLinkController::class)->except('show');
     Route::resource('packages', AdminPackageController::class)->except('show');
+    Route::resource('service-areas', AdminServiceAreaController::class)->except('show');
 
     Route::get('lost-stolen', [AdminLostReportController::class, 'index'])->name('lost-stolen.index');
     Route::put('lost-stolen/{report}', [AdminLostReportController::class, 'update'])->name('lost-stolen.update');
@@ -244,15 +246,9 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
             ->get()
             ->groupBy('group');
 
-        $policies = [
-            ['label' => 'MFA required for admins', 'value' => 'Enabled'],
-            ['label' => 'Session timeout', 'value' => '30 minutes'],
-            ['label' => 'Failed login alerts', 'value' => 'Enabled'],
-            ['label' => 'Password rotation', 'value' => 'Every 90 days'],
-        ];
-
-        return view('admin.security.index', compact('policies', 'settings', 'footerLinks'));
+        return view('admin.security.index', compact('settings', 'footerLinks'));
     })->name('security.index');
+    Route::put('security', [SystemSettingController::class, 'updateSecurity'])->name('security.update');
 
     Route::get('settings', [SystemSettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SystemSettingController::class, 'update'])->name('settings.update');
