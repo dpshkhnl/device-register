@@ -26,7 +26,9 @@ class TransferController extends Controller
             ->pluck('device_id')
             ->all();
 
-        return view('pages.transfer', compact('devices', 'pendingDeviceIds'));
+        $lostDeviceIds = $devices->where('status', 'lost')->pluck('id')->all();
+
+        return view('pages.transfer', compact('devices', 'pendingDeviceIds', 'lostDeviceIds'));
     }
 
     public function verifyNewOtp(Request $request)
@@ -40,6 +42,10 @@ class TransferController extends Controller
         $device = Device::where('imei', $data['device_imei'])
             ->where('current_owner_id', $request->user()->id)
             ->firstOrFail();
+
+        if ($device->status === 'lost') {
+            return back()->withInput()->withErrors(['device_imei' => 'This device is marked as lost. Please mark it as found first.']);
+        }
 
         if (TransferRequest::where('device_id', $device->id)->where('status', 'pending')->exists()) {
             return back()->withInput()->withErrors(['device_imei' => 'A pending transfer already exists for this device.']);
@@ -104,6 +110,10 @@ class TransferController extends Controller
         $device = Device::where('imei', $data['device_imei'])
             ->where('current_owner_id', $request->user()->id)
             ->firstOrFail();
+
+        if ($device->status === 'lost') {
+            return back()->withInput()->withErrors(['device_imei' => 'This device is marked as lost. Please mark it as found first.']);
+        }
 
         if (TransferRequest::where('device_id', $device->id)->where('status', 'pending')->exists()) {
             return back()->withInput()->withErrors(['device_imei' => 'A pending transfer already exists for this device.']);
@@ -178,6 +188,10 @@ class TransferController extends Controller
         $device = Device::where('imei', $data['device_imei'])
             ->where('current_owner_id', $request->user()->id)
             ->firstOrFail();
+
+        if ($device->status === 'lost') {
+            return back()->withInput()->withErrors(['device_imei' => 'This device is marked as lost. Please mark it as found first.']);
+        }
 
         if (TransferRequest::where('device_id', $device->id)->where('status', 'pending')->exists()) {
             return back()->withInput()->withErrors(['device_imei' => 'A pending transfer already exists for this device.']);
@@ -293,6 +307,10 @@ class TransferController extends Controller
         $device = Device::where('imei', $data['device_imei'])
             ->where('current_owner_id', $request->user()->id)
             ->firstOrFail();
+
+        if ($device->status === 'lost') {
+            return back()->withInput()->withErrors(['device_imei' => 'This device is marked as lost. Please mark it as found first.']);
+        }
 
         if (TransferRequest::where('device_id', $device->id)->where('status', 'pending')->exists()) {
             return back()->withInput()->withErrors(['device_imei' => 'A pending transfer already exists for this device.']);

@@ -60,7 +60,7 @@
                                 <x-ui.badge status="{{ $report->status === 'approved' ? 'lost' : 'suspicious' }}" label="{{ ucfirst($report->status) }}" />
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <form method="POST" action="{{ route('admin.lost-stolen.update', $report) }}" class="inline-flex items-center gap-2">
+                                <form method="POST" action="{{ route('admin.lost-stolen.update', $report) }}" class="inline-flex items-center gap-2" data-swal-confirm data-swal-title="Update report status?" data-swal-text="This will update the device status as well." data-swal-confirm="Yes, update">
                                     @csrf
                                     @method('PUT')
                                     <select name="status" class="rounded-lg border border-slate-200 px-2 py-1 text-xs">

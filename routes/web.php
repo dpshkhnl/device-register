@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\TransferController;
@@ -47,6 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/transfer', [TransferController::class, 'store'])->name('transfer.store');
     Route::post('/transfer/{transfer}/accept', [TransferController::class, 'accept'])->name('transfer.accept');
     Route::post('/transfer/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfer.cancel');
+    Route::get('/lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
+    Route::post('/lost-found', [LostFoundController::class, 'store'])->name('lost-found.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -37,7 +37,9 @@ class LostReportController extends Controller
         $report->save();
 
         if ($data['status'] === 'approved' && $report->device) {
-            $report->device->update(['status' => 'lost']);
+            $report->device->update([
+                'status' => $report->type === 'found' ? 'active' : 'lost',
+            ]);
         }
 
         $logger->log('lost_report_' . $data['status'], $report, [], [

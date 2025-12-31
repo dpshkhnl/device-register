@@ -121,9 +121,10 @@
                             @php
                                 $maskedImei = substr($device->imei, 0, 4).'****'.substr($device->imei, -4);
                                 $isPending = in_array($device->id, $pendingDeviceIds ?? [], true);
+                                $isLost = in_array($device->id, $lostDeviceIds ?? [], true);
                             @endphp
-                            <label class="flex cursor-pointer items-center gap-4 rounded-2xl border border-border bg-background px-4 py-4 transition hover:border-primary/40 {{ $isPending ? 'opacity-60 cursor-not-allowed' : '' }}">
-                                <input type="radio" name="device_imei" value="{{ $device->imei }}" class="peer sr-only" {{ $selectedImei === $device->imei ? 'checked' : '' }} {{ $isPending ? 'disabled' : '' }} />
+                            <label class="flex cursor-pointer items-center gap-4 rounded-2xl border border-border bg-background px-4 py-4 transition hover:border-primary/40 {{ ($isPending || $isLost) ? 'opacity-60 cursor-not-allowed' : '' }}">
+                                <input type="radio" name="device_imei" value="{{ $device->imei }}" class="peer sr-only" {{ $selectedImei === $device->imei ? 'checked' : '' }} {{ ($isPending || $isLost) ? 'disabled' : '' }} />
                                 <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground peer-checked:bg-primary/10 peer-checked:text-primary">
                                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
                                         <rect x="7" y="2" width="10" height="20" rx="2"></rect>
@@ -135,6 +136,9 @@
                                     <span class="block text-xs text-muted-foreground">IMEI: {{ $maskedImei }}</span>
                                     @if ($isPending)
                                         <span class="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Pending transfer</span>
+                                    @endif
+                                    @if ($isLost)
+                                        <span class="mt-1 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">Marked lost</span>
                                     @endif
                                 </span>
                                 <span class="flex h-6 w-6 items-center justify-center rounded-full border border-border text-transparent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
