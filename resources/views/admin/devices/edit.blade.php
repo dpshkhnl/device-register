@@ -63,21 +63,38 @@
                     </div>
 
                     <div>
-                        <label class="text-sm font-medium text-slate-900">Status *</label>
-                        <select
-                            name="status"
-                            class="mt-2 h-12 w-full rounded-lg border bg-white px-4 text-sm {{ $errors->has('status') ? 'border-rose-300 bg-rose-50/40 text-rose-700' : 'border-slate-200' }}"
-                            required
-                        >
-                            <option value="active" @selected(old('status', $device->status) === 'active')>Active</option>
-                            <option value="transferred" @selected(old('status', $device->status) === 'transferred')>Transferred</option>
-                            <option value="lost" @selected(old('status', $device->status) === 'lost')>Lost / Missing</option>
-                            <option value="suspicious" @selected(old('status', $device->status) === 'suspicious')>Suspicious</option>
-                        </select>
-                        @error('status')
+                        <label class="text-sm font-medium text-slate-900">IMEI 2 (Optional)</label>
+                        <input
+                            name="imei2"
+                            value="{{ old('imei2', $device->imei2) }}"
+                            placeholder="Enter 15-digit IMEI 2"
+                            inputmode="numeric"
+                            pattern="[0-9]{15}"
+                            minlength="15"
+                            maxlength="15"
+                            class="mt-2 h-12 w-full rounded-lg border bg-white px-4 text-sm font-mono {{ $errors->has('imei2') ? 'border-rose-300 bg-rose-50/40 text-rose-700 placeholder-rose-300' : 'border-slate-200' }}"
+                        />
+                        @error('imei2')
                             <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                         @enderror
                     </div>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-slate-900">Status *</label>
+                    <select
+                        name="status"
+                        class="mt-2 h-12 w-full rounded-lg border bg-white px-4 text-sm {{ $errors->has('status') ? 'border-rose-300 bg-rose-50/40 text-rose-700' : 'border-slate-200' }}"
+                        required
+                    >
+                        <option value="active" @selected(old('status', $device->status) === 'active')>Active</option>
+                        <option value="transferred" @selected(old('status', $device->status) === 'transferred')>Transferred</option>
+                        <option value="lost" @selected(old('status', $device->status) === 'lost')>Lost / Missing</option>
+                        <option value="suspicious" @selected(old('status', $device->status) === 'suspicious')>Suspicious</option>
+                    </select>
+                    @error('status')
+                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="grid gap-6 sm:grid-cols-2">

@@ -40,7 +40,7 @@
             <div class="space-y-4 text-sm text-slate-600">
                 <p class="font-semibold text-slate-900">Required columns</p>
                 <p>owner_name, owner_email, imei, brand, model, device_type, purchase_type, purchase_date, status</p>
-                <p>Optional columns: owner_mobile, seller_name</p>
+                <p>Optional columns: owner_mobile, imei2, seller_name</p>
                 <p>Purchase type must be <span class="font-mono">new</span> or <span class="font-mono">secondhand</span>. Status can be active, transferred, lost, suspicious.</p>
             </div>
 

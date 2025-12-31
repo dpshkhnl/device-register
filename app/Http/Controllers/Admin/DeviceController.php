@@ -36,6 +36,7 @@ class DeviceController extends Controller
             ->when($search, function ($query, $search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('imei', 'like', "%{$search}%")
+                        ->orWhere('imei2', 'like', "%{$search}%")
                         ->orWhere('brand', 'like', "%{$search}%")
                         ->orWhere('model', 'like', "%{$search}%")
                         ->orWhereHas('currentOwner', function ($ownerQuery) use ($search) {
@@ -112,6 +113,7 @@ class DeviceController extends Controller
         $validated = $request->validate([
             'owner_id' => ['required', 'exists:users,id'],
             'imei' => ['required', 'digits:15', 'unique:devices,imei'],
+            'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
             'brand' => ['required', 'string', 'max:100'],
             'model' => ['required', 'string', 'max:100'],
             'device_type' => ['required', 'string', 'max:50'],
@@ -130,6 +132,7 @@ class DeviceController extends Controller
         $device = Device::create([
             'current_owner_id' => $validated['owner_id'],
             'imei' => $validated['imei'],
+            'imei2' => $validated['imei2'] ?? null,
             'brand' => $validated['brand'],
             'model' => $validated['model'],
             'device_type' => $validated['device_type'],
@@ -192,6 +195,7 @@ class DeviceController extends Controller
         $validated = $request->validate([
             'owner_id' => ['required', 'exists:users,id'],
             'imei' => ['required', 'digits:15', Rule::unique('devices', 'imei')->ignore($device->id)],
+            'imei2' => ['nullable', 'digits:15', Rule::unique('devices', 'imei2')->ignore($device->id), 'different:imei'],
             'brand' => ['required', 'string', 'max:100'],
             'model' => ['required', 'string', 'max:100'],
             'device_type' => ['required', 'string', 'max:50'],
@@ -209,6 +213,7 @@ class DeviceController extends Controller
         $device->update([
             'current_owner_id' => $validated['owner_id'],
             'imei' => $validated['imei'],
+            'imei2' => $validated['imei2'] ?? null,
             'brand' => $validated['brand'],
             'model' => $validated['model'],
             'device_type' => $validated['device_type'],
@@ -243,6 +248,7 @@ class DeviceController extends Controller
             'owner_email',
             'owner_mobile',
             'imei',
+            'imei2',
             'brand',
             'model',
             'device_type',
@@ -268,6 +274,7 @@ class DeviceController extends Controller
                 'user'.$i.'@example.com',
                 '9800000'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
                 str_pad((string) $i, 15, '0', STR_PAD_LEFT),
+                null,
                 $brands[$i % count($brands)],
                 $models[$i % count($models)],
                 $deviceTypes[$i % count($deviceTypes)],
@@ -370,6 +377,7 @@ class DeviceController extends Controller
                 'owner_email' => $raw['owner_email'] ?? null,
                 'owner_mobile' => $raw['owner_mobile'] ?? null,
                 'imei' => $raw['imei'] ?? null,
+                'imei2' => $raw['imei2'] ?? null,
                 'brand' => $raw['brand'] ?? null,
                 'model' => $raw['model'] ?? null,
                 'device_type' => $raw['device_type'] ?? null,
@@ -382,6 +390,7 @@ class DeviceController extends Controller
                 'owner_email' => ['required', 'email'],
                 'owner_mobile' => ['nullable', 'string', 'max:20'],
                 'imei' => ['required', 'digits:15', 'unique:devices,imei'],
+                'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
                 'brand' => ['required', 'string', 'max:100'],
                 'model' => ['required', 'string', 'max:100'],
                 'device_type' => ['required', 'string', 'max:50'],
@@ -421,6 +430,7 @@ class DeviceController extends Controller
             Device::create([
                 'current_owner_id' => $user->id,
                 'imei' => $raw['imei'],
+                'imei2' => $raw['imei2'] ?? null,
                 'brand' => $raw['brand'],
                 'model' => $raw['model'],
                 'device_type' => $raw['device_type'],

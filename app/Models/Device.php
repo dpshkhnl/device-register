@@ -11,6 +11,7 @@ class Device extends Model
 
     protected $fillable = [
         'imei',
+        'imei2',
         'brand',
         'model',
         'device_type',

@@ -53,6 +53,7 @@ class DeviceController extends Controller
 
         $validated = $request->validate([
             'imei' => ['required', 'digits:15', 'unique:devices,imei'],
+            'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
             'brand' => ['required', 'string', 'max:100'],
             'model' => ['required', 'string', 'max:100'],
             'device_type' => ['required', 'string', 'max:50'],
@@ -69,6 +70,7 @@ class DeviceController extends Controller
         $device = Device::create([
             'current_owner_id' => $request->user()->id,
             'imei' => $validated['imei'],
+            'imei2' => $validated['imei2'] ?? null,
             'brand' => $validated['brand'],
             'model' => $validated['model'],
             'device_type' => $validated['device_type'],
@@ -116,7 +118,10 @@ class DeviceController extends Controller
                 }
             }
 
-            $device = Device::with('currentOwner')->where('imei', $imei)->first();
+            $device = Device::with('currentOwner')
+                ->where('imei', $imei)
+                ->orWhere('imei2', $imei)
+                ->first();
             $result = $device ? 'found' : 'not_found';
 
             ImeiCheck::create([

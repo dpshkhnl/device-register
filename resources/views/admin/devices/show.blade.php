@@ -9,6 +9,9 @@
                 <a href="{{ route('admin.devices.index') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-700">Back to Devices</a>
                 <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $device->brand }} {{ $device->model }}</h1>
                 <p class="text-sm text-slate-500">IMEI <span class="font-mono text-xs">{{ $device->imei }}</span></p>
+                @if ($device->imei2)
+                    <p class="text-sm text-slate-500">IMEI 2 <span class="font-mono text-xs">{{ $device->imei2 }}</span></p>
+                @endif
             </div>
             <x-ui.badge status="{{ $device->status }}" />
         </div>

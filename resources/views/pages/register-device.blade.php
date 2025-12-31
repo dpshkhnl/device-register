@@ -80,6 +80,25 @@
                         <p class="mt-2 text-xs text-muted-foreground">Dial <span class="font-mono font-medium">*#06#</span> to find your IMEI.</p>
                     </div>
 
+                    <div>
+                        <label class="text-xs font-semibold text-foreground">IMEI 2 (Optional)</label>
+                        <input
+                            type="text"
+                            name="imei2"
+                            placeholder="Enter second 15-digit IMEI"
+                            inputmode="numeric"
+                            pattern="[0-9]{15}"
+                            minlength="15"
+                            maxlength="15"
+                            value="{{ old('imei2') }}"
+                            class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                        @error('imei2')
+                            <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-2 text-xs text-muted-foreground">Leave blank if your device has only one IMEI.</p>
+                    </div>
+
                     <div class="grid gap-5 sm:grid-cols-2">
                         <div>
                             <label class="text-xs font-semibold text-foreground">Brand *</label>
