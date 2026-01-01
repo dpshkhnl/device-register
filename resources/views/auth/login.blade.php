@@ -6,6 +6,7 @@
     $serviceAreas = $serviceAreas ?? collect();
     $defaultDialCode = $defaultDialCode ?? '+977';
     $showOtp = $otpEnabled && (old('otp') || $errors->has('otp') || session('otp_purpose') === 'auth_login' || session('dev_otp_login'));
+    $loginMode = old('email') ? 'email' : (old('mobile') ? 'mobile' : 'mobile');
 @endphp
 <section class="py-12 lg:py-16">
     <div class="container max-w-5xl">
@@ -41,13 +42,24 @@
 
                 <form class="mt-6 space-y-4" method="POST" action="{{ route('login') }}">
                     @csrf
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-sm font-medium text-foreground" for="email">Email (optional)</label>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-2 text-xs font-semibold text-muted-foreground">
+                            <button type="button" id="login-mode-email" class="flex-1 rounded-lg border px-3 py-2 text-center {{ $loginMode === 'email' ? 'border-primary bg-primary/10 text-primary shadow-sm' : 'border-transparent' }}">
+                                Email
+                            </button>
+                            <button type="button" id="login-mode-mobile" class="flex-1 rounded-lg border px-3 py-2 text-center {{ $loginMode === 'mobile' ? 'border-primary bg-primary/10 text-primary shadow-sm' : 'border-transparent' }}">
+                                Phone
+                            </button>
+                        </div>
+
+                        <div id="email-panel" class="{{ $loginMode === 'email' ? '' : 'hidden' }}">
+                            <label class="text-sm font-medium text-foreground" for="email">Email</label>
                             <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="username" placeholder="name@example.com" class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm" />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('login')" class="mt-2" />
                         </div>
-                        <div>
+
+                        <div id="mobile-panel" class="{{ $loginMode === 'mobile' ? '' : 'hidden' }}">
                             <label class="text-sm font-medium text-foreground" for="mobile">Mobile Number</label>
                             <div class="mt-2 grid gap-3 sm:grid-cols-[140px,1fr]">
                                 <select id="country_code" name="country_code" class="h-12 rounded-lg border border-border bg-background px-3 text-sm">
@@ -61,7 +73,7 @@
                                 </select>
                                 <input id="mobile" type="text" name="mobile" value="{{ old('mobile') }}" autocomplete="tel" placeholder="98XXXXXXXX" class="h-12 rounded-lg border border-border bg-background px-4 text-sm" />
                             </div>
-                            <p class="mt-2 text-xs text-muted-foreground">Use email or mobile. Mobile requires country code.</p>
+                            <p class="mt-2 text-xs text-muted-foreground">Use your phone number with country code.</p>
                             <x-input-error :messages="$errors->get('login')" class="mt-2" />
                             <x-input-error :messages="$errors->get('mobile')" class="mt-2" />
                         </div>
@@ -121,6 +133,12 @@
             const toggle = document.getElementById('otp-toggle');
             const panel = document.getElementById('otp-panel');
             const passwordPanel = document.getElementById('password-panel');
+            const emailPanel = document.getElementById('email-panel');
+            const mobilePanel = document.getElementById('mobile-panel');
+            const emailButton = document.getElementById('login-mode-email');
+            const mobileButton = document.getElementById('login-mode-mobile');
+            const emailInput = document.getElementById('email');
+            const mobileInput = document.getElementById('mobile');
             if (!toggle || !panel || !passwordPanel) {
                 return;
             }
@@ -138,6 +156,35 @@
             });
 
             updateLabel();
+
+            const setMode = (mode) => {
+                if (!emailPanel || !mobilePanel || !emailButton || !mobileButton) {
+                    return;
+                }
+                const isEmail = mode === 'email';
+                emailPanel.classList.toggle('hidden', !isEmail);
+                mobilePanel.classList.toggle('hidden', isEmail);
+                emailButton.classList.toggle('border-primary', isEmail);
+                emailButton.classList.toggle('bg-primary/10', isEmail);
+                emailButton.classList.toggle('text-primary', isEmail);
+                emailButton.classList.toggle('shadow-sm', isEmail);
+                emailButton.classList.toggle('border-transparent', !isEmail);
+                mobileButton.classList.toggle('border-primary', !isEmail);
+                mobileButton.classList.toggle('bg-primary/10', !isEmail);
+                mobileButton.classList.toggle('text-primary', !isEmail);
+                mobileButton.classList.toggle('shadow-sm', !isEmail);
+                mobileButton.classList.toggle('border-transparent', isEmail);
+
+                if (isEmail && mobileInput) {
+                    mobileInput.value = '';
+                }
+                if (!isEmail && emailInput) {
+                    emailInput.value = '';
+                }
+            };
+
+            emailButton?.addEventListener('click', () => setMode('email'));
+            mobileButton?.addEventListener('click', () => setMode('mobile'));
         });
     </script>
 @endif

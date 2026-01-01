@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogController;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
 use App\Http\Controllers\Admin\FooterLinkController as AdminFooterLinkController;
@@ -86,6 +87,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::resource('footer-links', AdminFooterLinkController::class)->except('show');
     Route::resource('packages', AdminPackageController::class)->except('show');
     Route::resource('service-areas', AdminServiceAreaController::class)->except('show');
+    Route::resource('brands', AdminBrandController::class)->except('show');
 
     Route::get('lost-stolen', [AdminLostReportController::class, 'index'])->name('lost-stolen.index');
     Route::put('lost-stolen/{report}', [AdminLostReportController::class, 'update'])->name('lost-stolen.update');

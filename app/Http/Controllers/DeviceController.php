@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\ImeiCheck;
+use App\Models\Brand;
 use Illuminate\Http\Request;
 
 class DeviceController extends Controller
@@ -18,24 +19,14 @@ class DeviceController extends Controller
             ['value' => 'other', 'label' => 'Other'],
         ];
 
-        $brands = [
-            'Apple',
-            'Samsung',
-            'Google',
-            'OnePlus',
-            'Xiaomi',
-            'Huawei',
-            'Oppo',
-            'Vivo',
-            'Realme',
-            'Motorola',
-            'Nokia',
-            'Sony',
-            'LG',
-            'Asus',
-            'Lenovo',
-            'Other',
-        ];
+        $brands = Brand::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+        if (! $brands) {
+            $brands = ['Other'];
+        }
 
         return view('pages.register-device', compact('deviceTypes', 'brands'));
     }
@@ -54,7 +45,7 @@ class DeviceController extends Controller
         $validated = $request->validate([
             'imei' => ['required', 'digits:15', 'unique:devices,imei'],
             'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
-            'brand' => ['required', 'string', 'max:100'],
+            'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
             'device_type' => ['required', 'string', 'max:50'],
             'purchase_type' => ['required', 'in:new,secondhand'],

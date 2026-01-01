@@ -5,7 +5,7 @@
     <div class="pointer-events-none absolute inset-0 opacity-25"
         style="background-image: url('/images/hero-device.svg'); background-repeat: no-repeat; background-position: right 6% top 12%; background-size: 220px;">
     </div>
-    <div class="container max-w-5xl">
+    <div class="container max-w-6xl">
         <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
             <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

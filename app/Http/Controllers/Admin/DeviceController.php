@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Device;
 use App\Models\FooterLink;
 use App\Models\SystemSetting;
@@ -35,7 +36,7 @@ class DeviceController extends Controller
         $devices = Device::with('currentOwner')
             ->when($search, function ($query, $search) {
                 $query->where(function ($inner) use ($search) {
-                    $inner->where('imei', 'like', "%{$search}%")
+                $inner->where('imei', 'like', "%{$search}%")
                         ->orWhere('imei2', 'like', "%{$search}%")
                         ->orWhere('brand', 'like', "%{$search}%")
                         ->orWhere('model', 'like', "%{$search}%")
@@ -84,24 +85,14 @@ class DeviceController extends Controller
             ['value' => 'other', 'label' => 'Other'],
         ];
 
-        $brands = [
-            'Apple',
-            'Samsung',
-            'Google',
-            'OnePlus',
-            'Xiaomi',
-            'Huawei',
-            'Oppo',
-            'Vivo',
-            'Realme',
-            'Motorola',
-            'Nokia',
-            'Sony',
-            'LG',
-            'Asus',
-            'Lenovo',
-            'Other',
-        ];
+        $brands = Brand::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+        if (! $brands) {
+            $brands = ['Other'];
+        }
 
         $users = User::orderBy('name')->get();
 
@@ -114,7 +105,7 @@ class DeviceController extends Controller
             'owner_id' => ['required', 'exists:users,id'],
             'imei' => ['required', 'digits:15', 'unique:devices,imei'],
             'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
-            'brand' => ['required', 'string', 'max:100'],
+            'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
             'device_type' => ['required', 'string', 'max:50'],
             'purchase_type' => ['required', 'in:new,secondhand'],
@@ -166,24 +157,14 @@ class DeviceController extends Controller
             ['value' => 'other', 'label' => 'Other'],
         ];
 
-        $brands = [
-            'Apple',
-            'Samsung',
-            'Google',
-            'OnePlus',
-            'Xiaomi',
-            'Huawei',
-            'Oppo',
-            'Vivo',
-            'Realme',
-            'Motorola',
-            'Nokia',
-            'Sony',
-            'LG',
-            'Asus',
-            'Lenovo',
-            'Other',
-        ];
+        $brands = Brand::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+        if (! $brands) {
+            $brands = ['Other'];
+        }
 
         $users = User::orderBy('name')->get();
 
@@ -196,7 +177,7 @@ class DeviceController extends Controller
             'owner_id' => ['required', 'exists:users,id'],
             'imei' => ['required', 'digits:15', Rule::unique('devices', 'imei')->ignore($device->id)],
             'imei2' => ['nullable', 'digits:15', Rule::unique('devices', 'imei2')->ignore($device->id), 'different:imei'],
-            'brand' => ['required', 'string', 'max:100'],
+            'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
             'device_type' => ['required', 'string', 'max:50'],
             'purchase_type' => ['required', 'in:new,secondhand'],
@@ -261,11 +242,20 @@ class DeviceController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->fromArray($headers, null, 'A1');
-        $brands = ['Apple', 'Samsung', 'Google', 'OnePlus', 'Xiaomi'];
+        $brands = Brand::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->pluck('name')
+            ->take(5)
+            ->toArray();
         $models = ['iPhone 15', 'Galaxy S24', 'Pixel 9', 'OnePlus 12', 'Xiaomi 14'];
         $deviceTypes = ['smartphone', 'tablet', 'smartwatch', 'laptop'];
         $purchaseTypes = ['new', 'secondhand'];
         $statuses = ['active', 'transferred', 'lost', 'suspicious'];
+
+        if (! $brands) {
+            $brands = ['Other'];
+        }
 
         $rows = [];
         for ($i = 1; $i <= 100; $i++) {
@@ -391,7 +381,7 @@ class DeviceController extends Controller
                 'owner_mobile' => ['nullable', 'string', 'max:20'],
                 'imei' => ['required', 'digits:15', 'unique:devices,imei'],
                 'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
-                'brand' => ['required', 'string', 'max:100'],
+                'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
                 'model' => ['required', 'string', 'max:100'],
                 'device_type' => ['required', 'string', 'max:50'],
                 'purchase_type' => ['required', 'in:new,secondhand'],

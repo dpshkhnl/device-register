@@ -183,6 +183,14 @@
                     </svg>
                     Activity Log
                 </a>
+                <a href="{{ route('admin.brands.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.brands.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10l2 5-2 5H7L5 12l2-5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6"/>
+                    </svg>
+                    Brands
+                </a>
                 <a href="{{ route('admin.service-areas.index') }}"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.service-areas.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
                     <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
