@@ -16,6 +16,11 @@
             @if ($errors->any())
                 <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                     Please review the highlighted fields.
+                    <ul class="mt-2 space-y-1 text-xs text-rose-600">
+                        @foreach ($errors->all() as $message)
+                            <li>{{ $message }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
             <form method="POST" action="{{ route('admin.devices.store') }}" enctype="multipart/form-data" class="space-y-6">
@@ -25,6 +30,7 @@
                     <label class="text-sm font-medium text-slate-900">Owner *</label>
                     <select
                         name="owner_id"
+                        id="owner_id"
                         class="mt-2 h-12 w-full rounded-lg border bg-white px-4 text-sm {{ $errors->has('owner_id') ? 'border-rose-300 bg-rose-50/40 text-rose-700' : 'border-slate-200' }}"
                         required
                     >
@@ -98,7 +104,7 @@
                 <div class="grid gap-6 sm:grid-cols-2">
                     <div>
                         <label class="text-sm font-medium text-slate-900">Brand *</label>
-                        <select name="brand" class="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm">
+                        <select name="brand" id="brand_id" class="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm">
                             <option value="">Select brand</option>
                             @foreach ($brands as $brand)
                                 <option value="{{ $brand }}" @selected(old('brand') === $brand)>{{ $brand }}</option>
@@ -120,19 +126,6 @@
                             <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                         @enderror
                     </div>
-                </div>
-
-                <div>
-                    <label class="text-sm font-medium text-slate-900">Device Type *</label>
-                    <select name="device_type" class="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm">
-                        <option value="">Select device type</option>
-                        @foreach ($deviceTypes as $type)
-                            <option value="{{ $type['value'] }}" @selected(old('device_type') === $type['value'])>{{ $type['label'] }}</option>
-                        @endforeach
-                    </select>
-                    @error('device_type')
-                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
                 </div>
 
                 <div>
@@ -194,4 +187,49 @@
             </form>
         </div>
     </div>
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
+        <style>
+            .select2-container .select2-selection--single {
+                height: 3rem;
+                border-radius: 0.5rem;
+                border-color: #e2e8f0;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 3rem;
+                padding-left: 1rem;
+                padding-right: 2.5rem;
+                font-size: 0.875rem;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 3rem;
+                right: 0.75rem;
+            }
+        </style>
+    @endpush
+    @push('scripts')
+        <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+        <script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const select = document.getElementById('owner_id');
+                if (!select || typeof window.jQuery === 'undefined') {
+                    return;
+                }
+
+                window.jQuery(select).select2({
+                    width: '100%',
+                    placeholder: 'Select a user',
+                });
+
+                const brandSelect = document.getElementById('brand_id');
+                if (brandSelect) {
+                    window.jQuery(brandSelect).select2({
+                        width: '100%',
+                        placeholder: 'Select brand',
+                    });
+                }
+            });
+        </script>
+    @endpush
 @endsection

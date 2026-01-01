@@ -11,14 +11,6 @@ class DeviceController extends Controller
 {
     public function create()
     {
-        $deviceTypes = [
-            ['value' => 'smartphone', 'label' => 'Smartphone'],
-            ['value' => 'tablet', 'label' => 'Tablet'],
-            ['value' => 'smartwatch', 'label' => 'Smartwatch'],
-            ['value' => 'laptop', 'label' => 'Laptop'],
-            ['value' => 'other', 'label' => 'Other'],
-        ];
-
         $brands = Brand::where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -28,7 +20,7 @@ class DeviceController extends Controller
             $brands = ['Other'];
         }
 
-        return view('pages.register-device', compact('deviceTypes', 'brands'));
+        return view('pages.register-device', compact('brands'));
     }
 
     public function store(Request $request)
@@ -47,7 +39,6 @@ class DeviceController extends Controller
             'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
             'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
-            'device_type' => ['required', 'string', 'max:50'],
             'purchase_type' => ['required', 'in:new,secondhand'],
             'purchase_date' => ['required', 'date'],
             'invoice' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
@@ -64,7 +55,7 @@ class DeviceController extends Controller
             'imei2' => $validated['imei2'] ?? null,
             'brand' => $validated['brand'],
             'model' => $validated['model'],
-            'device_type' => $validated['device_type'],
+            'device_type' => 'other',
             'purchase_type' => $validated['purchase_type'],
             'purchase_date' => $validated['purchase_date'],
             'invoice_path' => $invoicePath,

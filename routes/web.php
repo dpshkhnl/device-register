@@ -29,6 +29,7 @@ use App\Models\ImeiCheck;
 use App\Models\SystemSetting;
 use App\Models\TransferRequest;
 use App\Models\User;
+use App\Models\Device;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -76,6 +77,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::get('devices/{device}/edit', [AdminDeviceController::class, 'edit'])->name('devices.edit');
     Route::put('devices/{device}/details', [AdminDeviceController::class, 'updateDetails'])->name('devices.update-details');
     Route::get('devices/{device}', [AdminDeviceController::class, 'show'])->name('devices.show');
+    Route::get('devices-export', [AdminDeviceController::class, 'export'])->name('devices.export');
     Route::delete('devices/{device}', [AdminDeviceController::class, 'destroy'])->name('devices.destroy');
     Route::put('devices/{device}', [AdminDeviceController::class, 'update'])->name('devices.update');
 
@@ -94,7 +96,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
 
     Route::get('activity-logs', [AdminActivityLogController::class, 'index'])->name('activity-logs.index');
 
-    Route::get('transfers', function () {
+    Route::get('imei-lookup', function () {
         $settings = SystemSetting::first();
         $footerLinks = FooterLink::where('is_active', true)
             ->orderBy('group')
@@ -102,10 +104,24 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
             ->get()
             ->groupBy('group');
 
-        $transfers = TransferRequest::with(['device', 'fromUser', 'toUser'])->latest()->paginate(10);
+        $imei = request('imei');
+        $device = null;
+        $result = null;
 
-        return view('admin.transfers.index', compact('transfers', 'settings', 'footerLinks'));
-    })->name('transfers.index');
+        if ($imei !== null && $imei !== '') {
+            request()->validate([
+                'imei' => ['required', 'digits:15'],
+            ]);
+
+            $device = Device::with('currentOwner')
+                ->where('imei', $imei)
+                ->orWhere('imei2', $imei)
+                ->first();
+            $result = $device ? 'found' : 'not_found';
+        }
+
+        return view('admin.imei-lookup', compact('settings', 'footerLinks', 'device', 'result', 'imei'));
+    })->name('imei-lookup');
 
     Route::get('roles', function () {
         $settings = SystemSetting::first();

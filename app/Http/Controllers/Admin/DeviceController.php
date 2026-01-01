@@ -63,7 +63,13 @@ class DeviceController extends Controller
             ->get()
             ->groupBy('group');
 
-        $device->load('currentOwner')->loadCount(['transferRequests', 'lostReports', 'certificates']);
+        $device->load([
+            'currentOwner',
+            'transferRequests.fromUser',
+            'transferRequests.toUser',
+            'lostReports.reporter',
+            'lostReports.approver',
+        ])->loadCount(['transferRequests', 'lostReports', 'certificates']);
 
         return view('admin.devices.show', compact('device', 'settings', 'footerLinks'));
     }
@@ -107,7 +113,7 @@ class DeviceController extends Controller
             'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
             'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
-            'device_type' => ['required', 'string', 'max:50'],
+            'device_type' => ['nullable', 'string', 'max:50'],
             'purchase_type' => ['required', 'in:new,secondhand'],
             'purchase_date' => ['required', 'date'],
             'status' => ['required', 'in:active,transferred,lost,suspicious'],
@@ -126,7 +132,7 @@ class DeviceController extends Controller
             'imei2' => $validated['imei2'] ?? null,
             'brand' => $validated['brand'],
             'model' => $validated['model'],
-            'device_type' => $validated['device_type'],
+            'device_type' => $validated['device_type'] ?? 'other',
             'purchase_type' => $validated['purchase_type'],
             'purchase_date' => $validated['purchase_date'],
             'status' => $validated['status'],
@@ -179,7 +185,7 @@ class DeviceController extends Controller
             'imei2' => ['nullable', 'digits:15', Rule::unique('devices', 'imei2')->ignore($device->id), 'different:imei'],
             'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
-            'device_type' => ['required', 'string', 'max:50'],
+            'device_type' => ['nullable', 'string', 'max:50'],
             'purchase_type' => ['required', 'in:new,secondhand'],
             'purchase_date' => ['required', 'date'],
             'status' => ['required', 'in:active,transferred,lost,suspicious'],
@@ -197,7 +203,7 @@ class DeviceController extends Controller
             'imei2' => $validated['imei2'] ?? null,
             'brand' => $validated['brand'],
             'model' => $validated['model'],
-            'device_type' => $validated['device_type'],
+            'device_type' => $validated['device_type'] ?? 'other',
             'purchase_type' => $validated['purchase_type'],
             'purchase_date' => $validated['purchase_date'],
             'status' => $validated['status'],
@@ -232,7 +238,6 @@ class DeviceController extends Controller
             'imei2',
             'brand',
             'model',
-            'device_type',
             'purchase_type',
             'purchase_date',
             'status',
@@ -249,7 +254,6 @@ class DeviceController extends Controller
             ->take(5)
             ->toArray();
         $models = ['iPhone 15', 'Galaxy S24', 'Pixel 9', 'OnePlus 12', 'Xiaomi 14'];
-        $deviceTypes = ['smartphone', 'tablet', 'smartwatch', 'laptop'];
         $purchaseTypes = ['new', 'secondhand'];
         $statuses = ['active', 'transferred', 'lost', 'suspicious'];
 
@@ -267,7 +271,6 @@ class DeviceController extends Controller
                 null,
                 $brands[$i % count($brands)],
                 $models[$i % count($models)],
-                $deviceTypes[$i % count($deviceTypes)],
                 $purchaseTypes[$i % count($purchaseTypes)],
                 now()->subDays($i)->format('Y-m-d'),
                 $statuses[$i % count($statuses)],
@@ -318,7 +321,6 @@ class DeviceController extends Controller
             'imei',
             'brand',
             'model',
-            'device_type',
             'purchase_type',
             'purchase_date',
             'status',
@@ -383,7 +385,7 @@ class DeviceController extends Controller
                 'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
                 'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
                 'model' => ['required', 'string', 'max:100'],
-                'device_type' => ['required', 'string', 'max:50'],
+            'device_type' => ['nullable', 'string', 'max:50'],
                 'purchase_type' => ['required', 'in:new,secondhand'],
                 'purchase_date' => ['required', 'date'],
                 'status' => ['required', 'in:active,transferred,lost,suspicious'],
@@ -423,7 +425,7 @@ class DeviceController extends Controller
                 'imei2' => $raw['imei2'] ?? null,
                 'brand' => $raw['brand'],
                 'model' => $raw['model'],
-                'device_type' => $raw['device_type'],
+                'device_type' => $raw['device_type'] ?? 'other',
                 'purchase_type' => $raw['purchase_type'],
                 'purchase_date' => $purchaseDate,
                 'status' => $raw['status'],
@@ -450,6 +452,77 @@ class DeviceController extends Controller
         return redirect()
             ->route('admin.devices.index')
             ->with('status', 'Device deleted successfully.');
+    }
+
+    public function export(Request $request)
+    {
+        $search = $request->input('q');
+        $status = $request->input('status');
+
+        $devices = Device::with('currentOwner')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('imei', 'like', "%{$search}%")
+                        ->orWhere('imei2', 'like', "%{$search}%")
+                        ->orWhere('brand', 'like', "%{$search}%")
+                        ->orWhere('model', 'like', "%{$search}%")
+                        ->orWhereHas('currentOwner', function ($ownerQuery) use ($search) {
+                            $ownerQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when($status && $status !== 'all', fn($query) => $query->where('status', $status))
+            ->latest()
+            ->get();
+
+        $headers = [
+            'IMEI',
+            'IMEI2',
+            'Brand',
+            'Model',
+            'Owner Name',
+            'Owner Email',
+            'Status',
+            'Purchase Type',
+            'Purchase Date',
+            'Registered At',
+        ];
+
+        $rows = $devices->map(function ($device) {
+            return [
+                $device->imei,
+                $device->imei2,
+                $device->brand,
+                $device->model,
+                $device->currentOwner?->name,
+                $device->currentOwner?->email,
+                $device->status,
+                $device->purchase_type,
+                optional($device->purchase_date)->format('Y-m-d'),
+                optional($device->registered_at ?? $device->created_at)->format('Y-m-d H:i:s'),
+            ];
+        })->toArray();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->fromArray($headers, null, 'A1');
+        if ($rows) {
+            $sheet->fromArray($rows, null, 'A2');
+        }
+
+        foreach (range('A', 'J') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'devices-export-'.now()->format('Ymd_His').'.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     protected function generateUniqueMobile(): string

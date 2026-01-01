@@ -14,6 +14,11 @@ class LostReport extends Model
         'reporter_user_id',
         'type',
         'description',
+        'contact_phone_1',
+        'contact_phone_2',
+        'incident_type',
+        'incident_date',
+        'incident_location',
         'status',
         'approved_by',
         'approved_at',
@@ -21,6 +26,7 @@ class LostReport extends Model
 
     protected $casts = [
         'approved_at' => 'datetime',
+        'incident_date' => 'date',
     ];
 
     public function device()

@@ -87,5 +87,54 @@
                 <p class="text-xs text-slate-500">Generated certificates.</p>
             </x-ui.card>
         </div>
+
+        <x-ui.card>
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">History Log</p>
+                    <p class="mt-1 text-sm text-slate-500">Transfers and lost/found activity.</p>
+                </div>
+            </div>
+            <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Transfer History</p>
+                    <div class="mt-3 space-y-3 text-sm">
+                        @forelse ($device->transferRequests as $transfer)
+                            <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-semibold text-slate-900">{{ ucfirst($transfer->status) }}</p>
+                                    <p class="text-xs text-slate-500">{{ $transfer->created_at?->format('M d, Y') }}</p>
+                                </div>
+                                <p class="mt-2 text-xs text-slate-500">From {{ $transfer->fromUser?->name ?? 'N/A' }} to {{ $transfer->toUser?->name ?? 'N/A' }}</p>
+                            </div>
+                        @empty
+                            <p class="text-xs text-slate-500">No transfer activity recorded.</p>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lost/Found History</p>
+                    <div class="mt-3 space-y-3 text-sm">
+                        @forelse ($device->lostReports as $report)
+                            <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-semibold text-slate-900">
+                                        {{ $report->type === 'found' ? 'Found' : ucfirst($report->incident_type ?? $report->type) }}
+                                    </p>
+                                    <p class="text-xs text-slate-500">{{ $report->created_at?->format('M d, Y') }}</p>
+                                </div>
+                                <p class="mt-2 text-xs text-slate-500">Reported by {{ $report->reporter?->name ?? 'User' }}</p>
+                                @if ($report->incident_location)
+                                    <p class="mt-1 text-xs text-slate-500">Location: {{ $report->incident_location }}</p>
+                                @endif
+                            </div>
+                        @empty
+                            <p class="text-xs text-slate-500">No lost or found activity recorded.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </x-ui.card>
     </div>
 @endsection

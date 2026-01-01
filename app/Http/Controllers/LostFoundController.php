@@ -30,6 +30,11 @@ class LostFoundController extends Controller
             'device_id' => ['required', 'exists:devices,id'],
             'action' => ['required', 'in:lost,found'],
             'description' => ['nullable', 'string', 'max:500'],
+            'contact_phone_1' => ['required_if:action,lost', 'nullable', 'string', 'max:20'],
+            'contact_phone_2' => ['nullable', 'string', 'max:20'],
+            'incident_type' => ['required_if:action,lost', 'nullable', 'in:lost,stolen'],
+            'incident_date' => ['required_if:action,lost', 'nullable', 'date'],
+            'incident_location' => ['required_if:action,lost', 'nullable', 'string', 'max:255'],
             'password' => ['required', 'current_password'],
         ]);
 
@@ -50,6 +55,11 @@ class LostFoundController extends Controller
             'reporter_user_id' => $request->user()->id,
             'type' => $data['action'],
             'description' => $data['description'] ?? null,
+            'contact_phone_1' => $data['contact_phone_1'] ?? null,
+            'contact_phone_2' => $data['contact_phone_2'] ?? null,
+            'incident_type' => $data['incident_type'] ?? null,
+            'incident_date' => $data['incident_date'] ?? null,
+            'incident_location' => $data['incident_location'] ?? null,
             'status' => 'approved',
             'approved_by' => $request->user()->id,
             'approved_at' => now(),

@@ -128,19 +128,6 @@
                     </div>
 
                     <div>
-                        <label class="text-xs font-semibold text-foreground">Device Type *</label>
-                        <select name="device_type" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm">
-                            <option value="">Select device type</option>
-                            @foreach ($deviceTypes as $type)
-                                <option value="{{ $type['value'] }}" @selected(old('device_type') === $type['value'])>{{ $type['label'] }}</option>
-                            @endforeach
-                        </select>
-                        @error('device_type')
-                            <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
                         <label class="text-xs font-semibold text-foreground">Purchase Type *</label>
                         <div class="mt-3 grid gap-4 sm:grid-cols-2">
                             <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-muted/30 p-4">

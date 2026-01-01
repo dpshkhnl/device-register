@@ -11,29 +11,6 @@
     @endphp
 
     <div class="mx-auto max-w-6xl space-y-6">
-        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <x-ui.card class="p-3 text-center">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total Devices</p>
-                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $devices->total() }}</p>
-                <x-ui.badge class="mt-1 inline-flex justify-center" status="active" label="Registry count" />
-            </x-ui.card>
-            <x-ui.card class="p-3 text-center">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Active</p>
-                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $activeCount }}</p>
-                <x-ui.badge class="mt-1 inline-flex justify-center" status="active" label="Live" />
-            </x-ui.card>
-            <x-ui.card class="p-3 text-center">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Transferred</p>
-                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $transferredCount }}</p>
-                <x-ui.badge class="mt-1 inline-flex justify-center" status="transferred" label="Ownership change" />
-            </x-ui.card>
-            <x-ui.card class="p-3 text-center">
-                <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Lost / Suspicious</p>
-                <p class="mt-1 text-xl font-semibold text-slate-900">{{ $flaggedCount }}</p>
-                <x-ui.badge class="mt-1 inline-flex justify-center" status="lost" label="Needs review" />
-            </x-ui.card>
-        </div>
-
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
                 <div>
@@ -41,7 +18,7 @@
                     <p class="text-sm text-slate-500">Latest devices and status updates.</p>
                 </div>
                 <div class="flex gap-2">
-                    <button class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600">Export</button>
+                    <a class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600" href="{{ route('admin.devices.export', request()->only('q', 'status')) }}">Export</a>
                     <a class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800" href="{{ route('admin.devices.import') }}">Bulk Upload</a>
                     <a class="rounded-lg bg-[color:var(--brand-600)] px-3 py-2 text-xs font-semibold text-white" href="{{ route('admin.devices.create') }}">Add Device</a>
                 </div>
@@ -77,45 +54,64 @@
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                     <tr>
-                        <th class="px-4 py-3">IMEI</th>
-                        <th class="px-4 py-3">Device</th>
-                        <th class="px-4 py-3">Owner</th>
-                        <th class="px-4 py-3">Status</th>
-                        <th class="px-4 py-3">Update</th>
-                        <th class="px-4 py-3 text-right">Action</th>
+                        <th class="px-6 py-4">Device</th>
+                        <th class="px-6 py-4">IMEI</th>
+                        <th class="px-6 py-4">Owner</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @foreach ($devices as $device)
-                        <tr>
-                            <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ $device->imei }}</td>
-                            <td class="px-4 py-3">
-                                <p class="font-semibold text-slate-900">{{ $device->brand }} {{ $device->model }}</p>
-                                <p class="text-xs text-slate-500">{{ $device->device_type ?? 'Device' }}</p>
+                        <tr class="group hover:bg-slate-50/80">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                            <rect x="7" y="2" width="10" height="20" rx="2"></rect>
+                                            <path d="M11 18h2" stroke-linecap="round" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-slate-900">{{ $device->brand }} {{ $device->model }}</p>
+                                        <p class="text-xs text-slate-500">{{ $device->device_type ?? 'Device' }} · {{ $device->purchase_type ?? 'Unknown' }}</p>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="px-4 py-3 text-sm text-slate-600">{{ $device->currentOwner?->name ?? '—' }}</td>
-                            <td class="px-4 py-3">
-                                <x-ui.badge status="{{ $device->status }}" />
+                            <td class="px-6 py-4">
+                                <p class="font-mono text-xs text-slate-600">{{ $device->imei }}</p>
+                                @if ($device->imei2)
+                                    <p class="mt-1 font-mono text-[11px] text-slate-400">IMEI2 {{ $device->imei2 }}</p>
+                                @endif
                             </td>
-                            <td class="px-4 py-3">
-                                <button
-                                    type="button"
-                                    class="rounded-lg border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800"
-                                    x-data
-                                    x-on:click="$dispatch('open-modal', 'update-device-status-{{ $device->id }}')"
-                                >
-                                    Update Status
-                                </button>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-semibold text-slate-900">{{ $device->currentOwner?->name ?? '—' }}</p>
+                                <p class="text-xs text-slate-500">{{ $device->currentOwner?->email ?? 'No email' }}</p>
                             </td>
-                            <td class="px-4 py-3 text-right">
-                                <div class="flex items-center justify-end gap-3">
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col gap-2">
+                                    <x-ui.badge status="{{ $device->status }}" />
+                                    <button
+                                        type="button"
+                                        class="inline-flex w-fit items-center rounded-full border border-slate-200 px-3 py-1 text-[10px] font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                                        x-data
+                                        x-on:click="$dispatch('open-modal', 'update-device-status-{{ $device->id }}')"
+                                    >
+                                        Update status
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500">
+                                    <a class="font-semibold text-slate-600 hover:text-slate-800" href="{{ route('admin.devices.edit', $device) }}">Edit</a>
+                                    <span class="text-slate-300">|</span>
+                                    <a class="font-semibold text-[color:var(--brand-600)]" href="{{ route('admin.devices.show', $device) }}">Review</a>
+                                    <span class="text-slate-300">|</span>
                                     <form method="POST" action="{{ route('admin.devices.destroy', $device) }}" class="inline" data-delete-form>
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" data-delete-button>Delete</button>
+                                        <button type="button" class="font-semibold text-rose-600 hover:text-rose-700" data-delete-button>Delete</button>
                                     </form>
-                                    <a class="text-xs font-semibold text-slate-500 hover:text-slate-700" href="{{ route('admin.devices.edit', $device) }}">Edit</a>
-                                    <a class="text-xs font-semibold text-[color:var(--brand-600)]" href="{{ route('admin.devices.show', $device) }}">Review</a>
                                 </div>
                             </td>
                         </tr>
