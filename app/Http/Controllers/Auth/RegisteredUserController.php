@@ -49,6 +49,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'otp' => ['nullable', 'digits:6'],
             'terms' => ['accepted'],
+            'role' => ['required', 'in:'.implode(',', [User::ROLE_USER, User::ROLE_SHOP])],
         ]);
 
         $serviceArea = ServiceArea::where('id', $request->service_area_id)
@@ -97,7 +98,7 @@ class RegisteredUserController extends Controller
             'country_code' => $countryCode,
             'mobile' => $normalizedMobile,
             'email' => $request->email,
-            'role' => User::ROLE_USER,
+            'role' => $request->role,
             'password' => Hash::make($request->password),
         ]);
 

@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Device;
 use App\Models\FooterLink;
 use App\Models\SystemSetting;
+use App\Models\TransferRequest;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use Carbon\Carbon;
@@ -51,7 +52,9 @@ class DeviceController extends Controller
             ->paginate(20)
             ->appends(['q' => $search, 'status' => $status]);
 
-        return view('admin.devices.index', compact('devices', 'settings', 'footerLinks'));
+        $users = User::orderBy('name')->get();
+
+        return view('admin.devices.index', compact('devices', 'settings', 'footerLinks', 'users'));
     }
 
     public function show(Device $device)
@@ -539,15 +542,47 @@ class DeviceController extends Controller
         $data = $request->validate([
             'status' => ['required', 'in:active,transferred,lost,suspicious'],
             'reason' => ['nullable', 'string', 'max:500'],
+            'new_owner_id' => ['nullable', 'required_if:status,transferred', 'exists:users,id'],
         ]);
 
-        $old = ['status' => $device->status];
-        $device->update(['status' => $data['status']]);
+        if ($data['status'] === 'transferred' && (int) $data['new_owner_id'] === (int) $device->current_owner_id) {
+            return back()->withErrors(['new_owner_id' => 'Select a different owner for a transfer.'])->withInput();
+        }
 
-        $logger->log('device_status_updated', $device, $old, [
-            'status' => $data['status'],
-            'reason' => $data['reason'] ?? null,
-        ], $request->user()->id);
+        $old = [
+            'status' => $device->status,
+            'current_owner_id' => $device->current_owner_id,
+        ];
+        if ($data['status'] === 'transferred') {
+            $newOwner = User::find($data['new_owner_id']);
+            TransferRequest::create([
+                'device_id' => $device->id,
+                'from_user_id' => $device->current_owner_id,
+                'to_mobile' => $newOwner?->mobile ?? '',
+                'to_user_id' => $data['new_owner_id'],
+                'status' => 'accepted',
+                'comment' => $data['reason'] ? 'Admin transfer: '.$data['reason'] : 'Admin transfer',
+                'confirmed_at' => now(),
+            ]);
+
+            $device->update([
+                'current_owner_id' => $data['new_owner_id'],
+                'status' => 'active',
+            ]);
+
+            $logger->log('device_transferred', $device, $old, [
+                'status' => 'active',
+                'new_owner_id' => $data['new_owner_id'],
+                'reason' => $data['reason'] ?? null,
+            ], $request->user()->id);
+        } else {
+            $device->update(['status' => $data['status']]);
+
+            $logger->log('device_status_updated', $device, $old, [
+                'status' => $data['status'],
+                'reason' => $data['reason'] ?? null,
+            ], $request->user()->id);
+        }
 
         return redirect()->route('admin.devices.index')->with('status', 'Device status updated.');
     }

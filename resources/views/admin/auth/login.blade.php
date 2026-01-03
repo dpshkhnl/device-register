@@ -9,9 +9,9 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
     <div class="min-h-screen flex items-center justify-center px-4">
-        <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-100">
+        <div class="w-full rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-100">
             <div class="mb-6 text-center">
-                <div class="mx-auto mb-4 h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-semibold">
+                <div class="w-full mb-4 h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-semibold">
                     {{ strtoupper(substr($settings?->app_name ?? 'DRMS', 0, 1)) }}
                 </div>
                 <h1 class="text-xl font-semibold">Admin Login</h1>

@@ -3,7 +3,7 @@
 @section('page_heading', 'Device Review')
 
 @section('content')
-    <div class="mx-auto max-w-5xl space-y-6">
+    <div class="w-full space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
                 <a href="{{ route('admin.devices.index') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-700">Back to Devices</a>

@@ -3,7 +3,7 @@
 @section('page_heading', 'Add Device')
 
 @section('content')
-    <div class="mx-auto max-w-3xl">
+    <div class="w-full">
         <a href="{{ route('admin.devices.index') }}" class="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6" />

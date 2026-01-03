@@ -44,7 +44,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 20a8 8 0 0 1 16 0"/>
                     </svg>
-                    Users
+                    Customers
                 </a>
                 <a href="{{ route('admin.packages.index') }}"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.packages.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">

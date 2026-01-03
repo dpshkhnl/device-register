@@ -10,7 +10,7 @@
         $rejectedCount = $transferItems->whereIn('status', ['rejected', 'cancelled'])->count();
     @endphp
 
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <x-ui.card>
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pending Requests</p>

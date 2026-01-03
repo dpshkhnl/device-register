@@ -3,7 +3,7 @@
 @section('page_heading', 'Bulk Import')
 
 @section('content')
-    <div class="mx-auto max-w-3xl">
+    <div class="w-full">
         <a href="{{ route('admin.devices.index') }}" class="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6" />
@@ -12,7 +12,7 @@
         </a>
 
         <div class="mb-10 text-center">
-            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:var(--brand-100)]">
+            <div class="w-full mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[color:var(--brand-100)]">
                 <svg class="h-7 w-7 text-[color:var(--brand-600)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 17v2h16v-2M7 7l5-4 5 4M12 3v10" />
                 </svg>

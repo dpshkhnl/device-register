@@ -3,7 +3,7 @@
 @section('page_heading', 'Create Package')
 
 @section('content')
-    <div class="mx-auto max-w-4xl space-y-6">
+    <div class="w-full space-y-6">
         <form method="POST" action="{{ route('admin.packages.store') }}" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
             @csrf
             <div class="grid gap-4 md:grid-cols-2">

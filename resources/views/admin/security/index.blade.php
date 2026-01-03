@@ -3,7 +3,7 @@
 @section('page_heading', 'Security & Access')
 
 @section('content')
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         @if (session('status'))
             <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                 {{ session('status') }}

@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="py-8">
-    <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+    <div class="w-full sm:px-6 lg:px-8">
         <div class="flex items-center gap-4">
             <a href="{{ route('admin.home-banners.index') }}" class="text-sm font-semibold text-slate-500 hover:text-slate-700">Back</a>
             <h1 class="text-2xl font-semibold text-slate-900">Edit Banner</h1>

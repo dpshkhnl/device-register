@@ -3,7 +3,7 @@
 @section('page_heading', 'Dashboard')
 
 @section('content')
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin Overview</p>
             <h1 class="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Administrative Dashboard</h1>

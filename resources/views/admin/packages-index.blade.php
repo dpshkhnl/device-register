@@ -3,7 +3,7 @@
 @section('page_heading', 'Packages')
 
 @section('content')
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold text-slate-900">Packages</h2>

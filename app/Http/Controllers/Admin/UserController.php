@@ -27,7 +27,7 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'role' => ['required', 'in:' . implode(',', [User::ROLE_USER, User::ROLE_SHOP, User::ROLE_ADMIN, User::ROLE_AUTHORITY])],
+            'role' => ['required', 'in:' . implode(',', [User::ROLE_USER, User::ROLE_SHOP, User::ROLE_ADMIN])],
         ]);
 
         $user->update(['role' => $data['role']]);

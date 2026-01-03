@@ -46,6 +46,26 @@
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
                     <div>
+                        <label class="text-sm font-medium text-foreground">Account Type *</label>
+                        <div class="mt-2 grid gap-3 sm:grid-cols-2">
+                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                                <input type="radio" name="role" value="user" class="h-4 w-4" @checked(old('role', 'user') === 'user') />
+                                <div>
+                                    <p class="font-semibold text-foreground">Customer</p>
+                                    <p class="text-xs text-muted-foreground">Register devices for personal use.</p>
+                                </div>
+                            </label>
+                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                                <input type="radio" name="role" value="shop" class="h-4 w-4" @checked(old('role') === 'shop') />
+                                <div>
+                                    <p class="font-semibold text-foreground">Shop</p>
+                                    <p class="text-xs text-muted-foreground">Manage customers and registrations.</p>
+                                </div>
+                            </label>
+                        </div>
+                        <x-input-error :messages="$errors->get('role')" class="mt-2" />
+                    </div>
+                    <div>
                         <label class="text-sm font-medium text-foreground" for="service_area_id">Service Area</label>
                         <select id="service_area_id" name="service_area_id" required class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-sm">
                             @forelse ($serviceAreas as $serviceArea)

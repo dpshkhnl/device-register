@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="py-8">
-    <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
+    <div class="w-full sm:px-6 lg:px-8">
         <div class="mb-6 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-semibold text-slate-900">Service Areas</h1>

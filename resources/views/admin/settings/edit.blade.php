@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="py-8">
-    <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+    <div class="w-full sm:px-6 lg:px-8">
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">System Configuration</p>
             <h1 class="mt-2 text-2xl font-semibold text-slate-900">Settings</h1>

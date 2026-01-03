@@ -10,7 +10,7 @@
         $flaggedCount = $deviceItems->whereIn('status', ['lost', 'suspicious'])->count();
     @endphp
 
-    <div class="mx-auto max-w-6xl space-y-6">
+    <div class="w-full space-y-6">
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
                 <div>
@@ -122,7 +122,7 @@
 
         @foreach ($devices as $device)
             <x-modal name="update-device-status-{{ $device->id }}" maxWidth="lg" focusable>
-                <form method="POST" action="{{ route('admin.devices.update', $device) }}" class="p-6">
+                <form method="POST" action="{{ route('admin.devices.update', $device) }}" class="p-6" x-data="{ status: '{{ $device->status }}' }">
                     @csrf
                     @method('PUT')
                     <div class="flex items-start justify-between gap-4">
@@ -138,12 +138,29 @@
                     <div class="mt-4 space-y-4">
                         <div>
                             <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Status</label>
-                            <select name="status" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                            <select name="status" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" x-model="status">
                                 <option value="active" @selected($device->status === 'active')>Active</option>
                                 <option value="transferred" @selected($device->status === 'transferred')>Transferred</option>
                                 <option value="lost" @selected($device->status === 'lost')>Lost / Missing</option>
                                 <option value="suspicious" @selected($device->status === 'suspicious')>Suspicious</option>
                             </select>
+                        </div>
+
+                        <div x-show="status === 'transferred'" x-cloak>
+                            <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Assign New Owner</label>
+                            <select name="new_owner_id" class="js-new-owner-select mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                <option value="" disabled @selected(old('new_owner_id') === null)>Select a user</option>
+                                @foreach ($users as $user)
+                                    @continue($user->id === $device->current_owner_id)
+                                    <option value="{{ $user->id }}" @selected(old('new_owner_id') == $user->id)>
+                                        {{ $user->name }} ({{ $user->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('new_owner_id')
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-2 text-xs text-slate-500">Required when status is transferred.</p>
                         </div>
 
                         <div>
@@ -169,10 +186,45 @@
     </div>
 @endsection
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
+    <style>
+        .select2-container .select2-selection--single {
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            border-color: #e2e8f0;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 2.5rem;
+            padding-left: 0.75rem;
+            padding-right: 2rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 2.5rem;
+            right: 0.5rem;
+        }
+    </style>
+@endpush
+
 @push('scripts')
+    <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.jQuery !== 'undefined') {
+                window.jQuery('.js-new-owner-select').each(function () {
+                    const select = window.jQuery(this);
+                    const modalRoot = select.closest('.fixed.inset-0');
+                    select.select2({
+                        width: '100%',
+                        placeholder: 'Select a user',
+                        dropdownParent: modalRoot.length ? modalRoot : undefined,
+                    });
+                });
+            }
+
             if (typeof Swal === 'undefined') {
                 return;
             }

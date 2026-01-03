@@ -3,7 +3,7 @@
 @section('page_heading', 'IMEI Lookup')
 
 @section('content')
-    <div class="mx-auto max-w-5xl space-y-6">
+    <div class="w-full space-y-6">
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
