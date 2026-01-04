@@ -232,30 +232,6 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         return view('admin.reports.index', compact('reportStats', 'reportCards', 'settings', 'footerLinks'));
     })->name('reports.index');
 
-    Route::get('tasks', function () {
-        $settings = SystemSetting::first();
-        $footerLinks = FooterLink::where('is_active', true)
-            ->orderBy('group')
-            ->orderBy('sort_order')
-            ->get()
-            ->groupBy('group');
-
-        $taskStats = [
-            'queued' => 16,
-            'processing' => 3,
-            'failed' => 1,
-        ];
-
-        $tasks = [
-            ['name' => 'IMEI verification ingest', 'status' => 'processing', 'updated_at' => now()->subMinutes(10)],
-            ['name' => 'Lost device alert dispatch', 'status' => 'queued', 'updated_at' => now()->subMinutes(40)],
-            ['name' => 'Certificate generation batch', 'status' => 'queued', 'updated_at' => now()->subHour()],
-            ['name' => 'Daily compliance export', 'status' => 'failed', 'updated_at' => now()->subHours(2)],
-        ];
-
-        return view('admin.tasks.index', compact('tasks', 'taskStats', 'settings', 'footerLinks'));
-    })->name('tasks.index');
-
     Route::get('security', function () {
         $settings = SystemSetting::first();
         $footerLinks = FooterLink::where('is_active', true)
@@ -270,6 +246,8 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
 
     Route::get('settings', [SystemSettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SystemSettingController::class, 'update'])->name('settings.update');
+    Route::post('settings/test-email', [SystemSettingController::class, 'testEmail'])->name('settings.test-email');
+    Route::post('settings/test-sms', [SystemSettingController::class, 'testSms'])->name('settings.test-sms');
 });
 
 require __DIR__.'/auth.php';

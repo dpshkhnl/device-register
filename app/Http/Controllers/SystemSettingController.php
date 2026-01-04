@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SystemSettingRequest;
 use App\Models\SystemSetting;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class SystemSettingController extends Controller
@@ -36,5 +37,27 @@ class SystemSettingController extends Controller
         $setting->update($data);
 
         return redirect()->route('admin.security.index')->with('status', 'Security settings updated.');
+    }
+
+    public function testEmail(Request $request, NotificationService $notifier)
+    {
+        $data = $request->validate([
+            'test_email' => ['required', 'email', 'max:255'],
+        ]);
+
+        $notifier->sendEmail($data['test_email'], 'SMTP test email', 'This is a test email from DRMS settings.');
+
+        return redirect()->route('admin.settings.edit')->with('status', 'Test email sent.');
+    }
+
+    public function testSms(Request $request, NotificationService $notifier)
+    {
+        $data = $request->validate([
+            'test_sms' => ['required', 'string', 'max:20'],
+        ]);
+
+        $notifier->sendSms($data['test_sms'], 'This is a test SMS from DRMS settings.');
+
+        return redirect()->route('admin.settings.edit')->with('status', 'Test SMS sent.');
     }
 }

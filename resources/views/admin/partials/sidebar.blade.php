@@ -125,7 +125,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a7.98 7.98 0 0 0 .1-2 7.98 7.98 0 0 0-.1-2l2.06-1.6-2-3.46-2.42.98a8.08 8.08 0 0 0-3.46-2l-.37-2.6h-4l-.37 2.6a8.08 8.08 0 0 0-3.46 2l-2.42-.98-2 3.46L4.5 11a7.98 7.98 0 0 0-.1 2 7.98 7.98 0 0 0 .1 2l-2.06 1.6 2 3.46 2.42-.98a8.08 8.08 0 0 0 3.46 2l.37 2.6h4l.37-2.6a8.08 8.08 0 0 0 3.46-2l2.42.98 2-3.46L19.4 15z"/>
                     </svg>
-                    Hero & CTA
+                    Settings
                 </a>
                 <a href="{{ route('admin.home-banners.index') }}"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.home-banners.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
@@ -211,19 +211,6 @@
             </div>
         </div>
 
-        <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Utilities</p>
-            <div class="space-y-1">
-                <a href="{{ route('admin.tasks.index') }}"
-                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.tasks.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
-                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5h10M9 12h10M9 19h10"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 6h.01M5 12h.01M5 18h.01"/>
-                    </svg>
-                    Task Queue
-                </a>
-            </div>
-        </div>
     </nav>
 
     <div class="border-t border-slate-200 p-4 text-xs text-slate-500">

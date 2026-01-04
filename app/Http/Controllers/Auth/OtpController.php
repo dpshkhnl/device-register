@@ -7,6 +7,7 @@ use App\Models\Otp;
 use App\Models\ServiceArea;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -36,7 +37,7 @@ class OtpController extends Controller
             return back()->withErrors(['mobile' => 'Mobile number is already registered.'])->withInput();
         }
 
-        return $this->sendOtp($normalizedMobile, 'auth_register', 'dev_otp_register', $request);
+        return $this->sendOtp($normalizedMobile, 'auth_register', 'dev_otp_register', $request, app(NotificationService::class));
     }
 
     public function sendLoginOtp(Request $request)
@@ -75,10 +76,10 @@ class OtpController extends Controller
             return back()->withErrors(['login' => 'Account not found.'])->withInput();
         }
 
-        return $this->sendOtp($user->mobile, 'auth_login', 'dev_otp_login', $request);
+        return $this->sendOtp($user->mobile, 'auth_login', 'dev_otp_login', $request, app(NotificationService::class), $user->email);
     }
 
-    private function sendOtp(string $mobile, string $purpose, string $sessionKey, Request $request)
+    private function sendOtp(string $mobile, string $purpose, string $sessionKey, Request $request, NotificationService $notifier, ?string $email = null)
     {
         $settings = SystemSetting::first();
         $resendSeconds = (int) ($settings?->otp_resend_seconds ?? 60);
@@ -126,6 +127,13 @@ class OtpController extends Controller
                 'last_sent_at' => now(),
             ]
         );
+
+        $purposeLabel = str_replace('_', ' ', $purpose);
+        $otpMessage = "Your {$purposeLabel} OTP is {$otpCode}. It expires in 10 minutes.";
+        $notifier->sendSms($mobile, $otpMessage);
+        if ($email) {
+            $notifier->sendEmail($email, 'Your OTP code', $otpMessage);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([

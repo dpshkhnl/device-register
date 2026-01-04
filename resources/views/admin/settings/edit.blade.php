@@ -119,9 +119,109 @@
                 </div>
             </div>
 
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-900">SMS (AakashSMS)</h2>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Provider</label>
+                        <input name="sms_provider" value="{{ old('sms_provider', $setting->sms_provider ?? 'aakashsms') }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">API URL</label>
+                        <input name="sms_api_url" value="{{ old('sms_api_url', $setting->sms_api_url) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="https://aakashsms.com/admin/public/sms/v3/send" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Auth Token</label>
+                        <input name="sms_token" value="{{ old('sms_token', $setting->sms_token) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Sender ID (optional)</label>
+                        <input name="sms_sender" value="{{ old('sms_sender', $setting->sms_sender) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="DRMS" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-sm font-medium text-slate-700">Test SMS</label>
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <input
+                                name="test_sms"
+                                form="test-sms-form"
+                                value="{{ old('test_sms') }}"
+                                class="w-full flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                placeholder="+9779812345678"
+                            />
+                            <button
+                                type="submit"
+                                form="test-sms-form"
+                                class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                            >
+                                Send Test SMS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-900">Email (SMTP)</h2>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Host</label>
+                        <input name="mail_host" value="{{ old('mail_host', $setting->mail_host) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="smtp.example.com" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Port</label>
+                        <input name="mail_port" type="number" min="1" max="65535" value="{{ old('mail_port', $setting->mail_port) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="587" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Username</label>
+                        <input name="mail_username" value="{{ old('mail_username', $setting->mail_username) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Password</label>
+                        <input name="mail_password" type="password" value="{{ old('mail_password', $setting->mail_password) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">Encryption</label>
+                        <input name="mail_encryption" value="{{ old('mail_encryption', $setting->mail_encryption) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="tls" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">From Address</label>
+                        <input name="mail_from_address" value="{{ old('mail_from_address', $setting->mail_from_address) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="no-reply@example.com" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-slate-700">From Name</label>
+                        <input name="mail_from_name" value="{{ old('mail_from_name', $setting->mail_from_name) }}" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="DRMS" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-sm font-medium text-slate-700">Test Email</label>
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <input
+                                name="test_email"
+                                form="test-email-form"
+                                value="{{ old('test_email') }}"
+                                class="w-full flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                placeholder="you@example.com"
+                            />
+                            <button
+                                type="submit"
+                                form="test-email-form"
+                                class="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                            >
+                                Send Test Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end">
                 <button class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Save Settings</button>
             </div>
+        </form>
+        <form id="test-email-form" method="POST" action="{{ route('admin.settings.test-email') }}">
+            @csrf
+        </form>
+        <form id="test-sms-form" method="POST" action="{{ route('admin.settings.test-sms') }}">
+            @csrf
         </form>
     </div>
 </div>

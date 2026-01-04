@@ -7,6 +7,7 @@ use App\Models\Otp;
 use App\Models\SystemSetting;
 use App\Models\TransferRequest;
 use App\Models\User;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -168,7 +169,7 @@ class TransferController extends Controller
         return back()->withInput()->with('status', 'Old owner OTP verified.');
     }
 
-    public function sendOtp(Request $request)
+    public function sendOtp(Request $request, NotificationService $notifier)
     {
         $recipient = $request->input('recipient', 'new');
         if (! in_array($recipient, ['new', 'old'], true)) {
@@ -259,6 +260,9 @@ class TransferController extends Controller
                 'last_sent_at' => now(),
             ]
         );
+
+        $otpMessage = "Your transfer OTP is {$otpCode}. It expires in 10 minutes.";
+        $notifier->sendSms($targetMobile, $otpMessage);
 
         $response = back()
             ->withInput()
@@ -372,7 +376,7 @@ class TransferController extends Controller
         return redirect()->route('dashboard')->with('status', 'Transfer request submitted.')->with('transfer_confirmed', true);
     }
 
-    public function accept(Request $request, TransferRequest $transfer)
+    public function accept(Request $request, TransferRequest $transfer, NotificationService $notifier)
     {
         $user = $request->user();
 
@@ -399,6 +403,21 @@ class TransferController extends Controller
                 'current_owner_id' => $user->id,
                 'status' => 'transferred',
             ]);
+        }
+
+        $transfer->loadMissing(['device', 'fromUser', 'toUser']);
+        if ($transfer->device) {
+            $deviceLabel = trim($transfer->device->brand.' '.$transfer->device->model);
+            $fromUser = $transfer->fromUser;
+            $toUser = $transfer->toUser ?? $user;
+
+            $messageOld = "Device {$deviceLabel} (IMEI {$transfer->device->imei}) ownership transferred to {$toUser?->name}.";
+            $messageNew = "You are now the owner of {$deviceLabel} (IMEI {$transfer->device->imei}).";
+
+            $notifier->sendEmail($fromUser?->email, 'Device ownership transferred', $messageOld);
+            $notifier->sendSms($fromUser?->mobile, $messageOld);
+            $notifier->sendEmail($toUser?->email, 'Device ownership transferred', $messageNew);
+            $notifier->sendSms($toUser?->mobile, $messageNew);
         }
 
         return back()->with('status', 'Transfer accepted. Device ownership updated.');

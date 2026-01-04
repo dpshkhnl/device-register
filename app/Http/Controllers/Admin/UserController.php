@@ -19,7 +19,19 @@ class UserController extends Controller
             ->get()
             ->groupBy('group');
 
-        $users = User::orderBy('created_at', 'desc')->paginate(20);
+        $search = request('q');
+
+        $users = User::with(['activePackage.package'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('mobile', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->appends(['q' => $search]);
 
         return view('admin.users.index', compact('users', 'settings', 'footerLinks'));
     }

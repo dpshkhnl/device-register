@@ -10,6 +10,7 @@ use App\Models\SystemSetting;
 use App\Models\TransferRequest;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -108,7 +109,7 @@ class DeviceController extends Controller
         return view('admin.devices.create', compact('settings', 'footerLinks', 'deviceTypes', 'brands', 'users'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notifier)
     {
         $validated = $request->validate([
             'owner_id' => ['required', 'exists:users,id'],
@@ -143,6 +144,15 @@ class DeviceController extends Controller
             'invoice_path' => $invoicePath,
             'registered_at' => now(),
         ]);
+
+        $owner = User::find($validated['owner_id']);
+        if ($owner) {
+            $deviceLabel = trim($device->brand.' '.$device->model);
+            $subject = 'Device registered';
+            $message = "Your device {$deviceLabel} (IMEI {$device->imei}) has been registered successfully.";
+            $notifier->sendEmail($owner->email, $subject, $message);
+            $notifier->sendSms($owner->mobile, $message);
+        }
 
         return redirect()
             ->route('admin.devices.show', $device)
@@ -180,8 +190,9 @@ class DeviceController extends Controller
         return view('admin.devices.edit', compact('device', 'settings', 'footerLinks', 'deviceTypes', 'brands', 'users'));
     }
 
-    public function updateDetails(Request $request, Device $device)
+    public function updateDetails(Request $request, Device $device, NotificationService $notifier)
     {
+        $previousStatus = $device->status;
         $validated = $request->validate([
             'owner_id' => ['required', 'exists:users,id'],
             'imei' => ['required', 'digits:15', Rule::unique('devices', 'imei')->ignore($device->id)],
@@ -213,6 +224,16 @@ class DeviceController extends Controller
             'seller_name' => $validated['seller_name'],
             'invoice_path' => $validated['invoice_path'] ?? $device->invoice_path,
         ]);
+
+        if ($previousStatus !== $validated['status']) {
+            $owner = User::find($validated['owner_id']);
+            if ($owner) {
+                $deviceLabel = trim($device->brand.' '.$device->model);
+                $message = "Device {$deviceLabel} (IMEI {$device->imei}) status changed to {$validated['status']}.";
+                $notifier->sendEmail($owner->email, 'Device status updated', $message);
+                $notifier->sendSms($owner->mobile, $message);
+            }
+        }
 
         return redirect()
             ->route('admin.devices.show', $device)
@@ -537,7 +558,7 @@ class DeviceController extends Controller
         return $mobile;
     }
 
-    public function update(Request $request, Device $device, ActivityLogger $logger)
+    public function update(Request $request, Device $device, ActivityLogger $logger, NotificationService $notifier)
     {
         $data = $request->validate([
             'status' => ['required', 'in:active,transferred,lost,suspicious'],
@@ -554,6 +575,7 @@ class DeviceController extends Controller
             'current_owner_id' => $device->current_owner_id,
         ];
         if ($data['status'] === 'transferred') {
+            $oldOwner = User::find($device->current_owner_id);
             $newOwner = User::find($data['new_owner_id']);
             TransferRequest::create([
                 'device_id' => $device->id,
@@ -575,6 +597,14 @@ class DeviceController extends Controller
                 'new_owner_id' => $data['new_owner_id'],
                 'reason' => $data['reason'] ?? null,
             ], $request->user()->id);
+
+            $deviceLabel = trim($device->brand.' '.$device->model);
+            $transferMessageOld = "Device {$deviceLabel} (IMEI {$device->imei}) ownership transferred to {$newOwner?->name}.";
+            $transferMessageNew = "You are now the owner of {$deviceLabel} (IMEI {$device->imei}).";
+            $notifier->sendEmail($oldOwner?->email, 'Device ownership transferred', $transferMessageOld);
+            $notifier->sendSms($oldOwner?->mobile, $transferMessageOld);
+            $notifier->sendEmail($newOwner?->email, 'Device ownership transferred', $transferMessageNew);
+            $notifier->sendSms($newOwner?->mobile, $transferMessageNew);
         } else {
             $device->update(['status' => $data['status']]);
 
@@ -582,6 +612,15 @@ class DeviceController extends Controller
                 'status' => $data['status'],
                 'reason' => $data['reason'] ?? null,
             ], $request->user()->id);
+
+            $owner = User::find($device->current_owner_id);
+            if ($owner) {
+                $deviceLabel = trim($device->brand.' '.$device->model);
+                $reasonText = $data['reason'] ? " Reason: {$data['reason']}." : '';
+                $message = "Device {$deviceLabel} (IMEI {$device->imei}) status changed to {$data['status']}.{$reasonText}";
+                $notifier->sendEmail($owner->email, 'Device status updated', $message);
+                $notifier->sendSms($owner->mobile, $message);
+            }
         }
 
         return redirect()->route('admin.devices.index')->with('status', 'Device status updated.');

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Device;
 use App\Models\ImeiCheck;
-use App\Models\Brand;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class DeviceController extends Controller
@@ -23,7 +24,7 @@ class DeviceController extends Controller
         return view('pages.register-device', compact('brands'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notifier)
     {
         $userPackage = $request->user()->activePackage()->first();
         if (! $userPackage) {
@@ -63,6 +64,12 @@ class DeviceController extends Controller
         ]);
 
         $userPackage->increment('used_device_count');
+
+        $deviceLabel = trim($device->brand.' '.$device->model);
+        $subject = 'Device registered';
+        $message = "Your device {$deviceLabel} (IMEI {$device->imei}) has been registered successfully.";
+        $notifier->sendEmail($request->user()->email, $subject, $message);
+        $notifier->sendSms($request->user()->mobile, $message);
 
         return redirect()
             ->route('devices.show', $device)

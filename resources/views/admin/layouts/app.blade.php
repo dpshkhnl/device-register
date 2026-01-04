@@ -21,7 +21,10 @@
     @stack('styles')
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
-    @if (session('status'))
+    @php
+        $statusMessage = session()->pull('status');
+    @endphp
+    @if ($statusMessage)
         <div
             x-data="{ show: true }"
             x-init="setTimeout(() => show = false, 4200)"
@@ -44,7 +47,7 @@
                 </div>
                 <div class="flex-1">
                     <p class="text-sm font-semibold text-slate-900">Status updated</p>
-                    <p class="mt-1 text-sm text-slate-600">{{ session('status') }}</p>
+                    <p class="mt-1 text-sm text-slate-600">{{ $statusMessage }}</p>
                 </div>
                 <button type="button" class="text-slate-400 hover:text-slate-600" x-on:click="show = false" aria-label="Close notification">
                     x

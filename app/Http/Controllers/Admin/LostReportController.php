@@ -20,7 +20,20 @@ class LostReportController extends Controller
             ->get()
             ->groupBy('group');
 
-        $reports = LostReport::with('device', 'reporter')->latest()->paginate(20);
+        LostReport::with('device')
+            ->where('type', 'found')
+            ->whereHas('device', fn ($query) => $query->where('status', '!=', 'active'))
+            ->get()
+            ->each(function ($report) {
+                if ($report->device) {
+                    $report->device->update(['status' => 'active']);
+                }
+            });
+
+        $reports = LostReport::with('device', 'reporter')
+            ->where('type', 'lost')
+            ->latest()
+            ->paginate(20);
 
         return view('admin.lost-stolen.index', compact('reports', 'settings', 'footerLinks'));
     }

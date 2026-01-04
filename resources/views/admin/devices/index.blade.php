@@ -54,6 +54,7 @@
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                     <tr>
+                        <th class="px-6 py-4">SN</th>
                         <th class="px-6 py-4">Device</th>
                         <th class="px-6 py-4">IMEI</th>
                         <th class="px-6 py-4">Owner</th>
@@ -64,6 +65,7 @@
                 <tbody class="divide-y divide-slate-100">
                     @foreach ($devices as $device)
                         <tr class="group hover:bg-slate-50/80">
+                            <td class="px-6 py-4 text-xs text-slate-500">{{ $devices->firstItem() + $loop->index }}</td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\LostReport;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class LostFoundController extends Controller
@@ -24,7 +25,7 @@ class LostFoundController extends Controller
         return view('pages.lost-found', compact('devices', 'reports'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, NotificationService $notifier)
     {
         $data = $request->validate([
             'device_id' => ['required', 'exists:devices,id'],
@@ -70,6 +71,15 @@ class LostFoundController extends Controller
         } else {
             $device->update(['status' => 'active']);
         }
+
+        $deviceLabel = trim($device->brand.' '.$device->model);
+        $incidentLabel = $data['action'] === 'lost'
+            ? ucfirst($data['incident_type'] ?? 'lost')
+            : 'Found';
+        $subject = $data['action'] === 'lost' ? 'Device reported lost' : 'Device marked found';
+        $message = "Device {$deviceLabel} (IMEI {$device->imei}) has been marked {$incidentLabel}.";
+        $notifier->sendEmail($request->user()->email, $subject, $message);
+        $notifier->sendSms($request->user()->mobile, $message);
 
         return back()->with('status', 'Report submitted successfully.');
     }
