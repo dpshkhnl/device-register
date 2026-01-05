@@ -30,12 +30,20 @@ class ServiceAreaController extends Controller
             'dial_code' => ['required', 'string', 'max:10'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
+            'allow_email_login' => ['nullable', 'boolean'],
+            'require_email_otp' => ['nullable', 'boolean'],
+            'allow_phone_login' => ['nullable', 'boolean'],
+            'require_phone_otp' => ['nullable', 'boolean'],
         ]);
 
         $data['iso2'] = strtoupper($data['iso2']);
         $data['dial_code'] = trim($data['dial_code']);
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
+        $data['allow_email_login'] = (bool) ($data['allow_email_login'] ?? false);
+        $data['require_email_otp'] = (bool) ($data['require_email_otp'] ?? false);
+        $data['allow_phone_login'] = (bool) ($data['allow_phone_login'] ?? false);
+        $data['require_phone_otp'] = (bool) ($data['require_phone_otp'] ?? false);
 
         ServiceArea::create($data);
 
@@ -55,12 +63,20 @@ class ServiceAreaController extends Controller
             'dial_code' => ['required', 'string', 'max:10'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
+            'allow_email_login' => ['nullable', 'boolean'],
+            'require_email_otp' => ['nullable', 'boolean'],
+            'allow_phone_login' => ['nullable', 'boolean'],
+            'require_phone_otp' => ['nullable', 'boolean'],
         ]);
 
         $data['iso2'] = strtoupper($data['iso2']);
         $data['dial_code'] = trim($data['dial_code']);
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
+        $data['allow_email_login'] = (bool) ($data['allow_email_login'] ?? false);
+        $data['require_email_otp'] = (bool) ($data['require_email_otp'] ?? false);
+        $data['allow_phone_login'] = (bool) ($data['allow_phone_login'] ?? false);
+        $data['require_phone_otp'] = (bool) ($data['require_phone_otp'] ?? false);
 
         $serviceArea->update($data);
 

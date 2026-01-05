@@ -44,6 +44,27 @@
                         Active
                     </label>
                 </div>
+                <div class="rounded-xl border border-slate-200 p-4">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Auth Options</p>
+                    <div class="mt-3 grid gap-4 sm:grid-cols-2">
+                        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                            <input type="checkbox" name="allow_email_login" value="1" class="h-4 w-4 rounded border-slate-300 text-[color:var(--brand-600)]" {{ old('allow_email_login', true) ? 'checked' : '' }}>
+                            Enable Email Login
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                            <input type="checkbox" name="require_email_otp" value="1" class="h-4 w-4 rounded border-slate-300 text-[color:var(--brand-600)]" {{ old('require_email_otp') ? 'checked' : '' }}>
+                            Require Email OTP
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                            <input type="checkbox" name="allow_phone_login" value="1" class="h-4 w-4 rounded border-slate-300 text-[color:var(--brand-600)]" {{ old('allow_phone_login', true) ? 'checked' : '' }}>
+                            Enable Phone Login
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                            <input type="checkbox" name="require_phone_otp" value="1" class="h-4 w-4 rounded border-slate-300 text-[color:var(--brand-600)]" {{ old('require_phone_otp') ? 'checked' : '' }}>
+                            Require Phone OTP
+                        </label>
+                    </div>
+                </div>
                 <button class="rounded-lg bg-[color:var(--brand-600)] px-4 py-2 text-sm font-semibold text-white">Create Service Area</button>
             </form>
         </div>

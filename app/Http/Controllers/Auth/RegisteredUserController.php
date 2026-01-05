@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Otp;
 use App\Models\Package;
 use App\Models\ServiceArea;
-use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\UserPackage;
 use Illuminate\Auth\Events\Registered;
@@ -29,7 +27,7 @@ class RegisteredUserController extends Controller
             ->orderBy('name')
             ->get();
         $defaultServiceAreaId = ServiceArea::where('iso2', 'NP')->value('id');
-        $otpEnabled = (bool) (SystemSetting::first()?->auth_force_otp);
+        $otpEnabled = true;
 
         return view('auth.register', compact('serviceAreas', 'defaultServiceAreaId', 'otpEnabled'));
     }
@@ -44,52 +42,48 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'service_area_id' => ['required', 'integer', 'exists:service_areas,id'],
-            'mobile' => ['required', 'string', 'max:20'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'mobile' => ['nullable', 'string', 'max:20'],
+            'email' => ['nullable', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'otp' => ['nullable', 'digits:6'],
             'terms' => ['accepted'],
-            'role' => ['required', 'in:'.implode(',', [User::ROLE_USER, User::ROLE_SHOP])],
         ]);
+
+        if (! $request->filled('email') && ! $request->filled('mobile')) {
+            return back()->withErrors(['email' => 'Email or mobile is required.'])->withInput();
+        }
 
         $serviceArea = ServiceArea::where('id', $request->service_area_id)
             ->where('is_active', true)
             ->firstOrFail();
         $countryCode = preg_replace('/\s+/', '', $serviceArea->dial_code);
-        $mobileInput = preg_replace('/\s+/', '', $request->mobile);
-        $normalizedMobile = str_starts_with($mobileInput, '+')
-            ? $mobileInput
-            : $countryCode.$mobileInput;
+        $normalizedMobile = null;
+        if ($request->filled('mobile')) {
+            $mobileInput = preg_replace('/\s+/', '', $request->mobile);
+            $normalizedMobile = str_starts_with($mobileInput, '+')
+                ? $mobileInput
+                : $countryCode.$mobileInput;
 
-        if (! preg_match('/^\\+\\d{7,15}$/', $normalizedMobile)) {
-            return back()->withErrors(['mobile' => 'Select a service area and enter a valid mobile number.'])->withInput();
+            if (! preg_match('/^\\+\\d{7,15}$/', $normalizedMobile)) {
+                return back()->withErrors(['mobile' => 'Select a service area and enter a valid mobile number.'])->withInput();
+            }
+
+            if (User::where('mobile', $normalizedMobile)->exists()) {
+                return back()->withErrors(['mobile' => 'Mobile number is already registered.'])->withInput();
+            }
         }
 
-        if (User::where('mobile', $normalizedMobile)->exists()) {
-            return back()->withErrors(['mobile' => 'Mobile number is already registered.'])->withInput();
+        $verified = $request->session()->get('register_verified', false);
+        $verifiedEmail = $request->session()->get('register_email');
+        $verifiedMobile = $request->session()->get('register_mobile');
+        $verifiedServiceArea = $request->session()->get('register_service_area_id');
+        if (! $verified || $verifiedServiceArea != $request->service_area_id) {
+            return back()->withErrors(['email' => 'Please verify OTP before registering.'])->withInput();
         }
-
-        $settings = SystemSetting::first();
-        if ($settings?->auth_force_otp) {
-            $otpValue = $request->input('otp');
-            if (! $otpValue) {
-                return back()->withErrors(['otp' => 'OTP is required.'])->withInput();
-            }
-
-            $otp = Otp::where('mobile', $normalizedMobile)
-                ->where('purpose', 'auth_register')
-                ->first();
-
-            if (! $otp || $otp->expires_at?->isPast()) {
-                return back()->withErrors(['otp' => 'OTP expired or not found. Please resend OTP.'])->withInput();
-            }
-
-            if (! Hash::check($otpValue, $otp->otp_hash)) {
-                $otp->increment('attempts');
-                return back()->withErrors(['otp' => 'Invalid OTP. Please try again.'])->withInput();
-            }
-
-            $otp->delete();
+        if ($request->filled('email') && $verifiedEmail !== $request->email) {
+            return back()->withErrors(['email' => 'Please verify OTP before registering.'])->withInput();
+        }
+        if ($normalizedMobile && $verifiedMobile !== $normalizedMobile) {
+            return back()->withErrors(['mobile' => 'Please verify phone OTP before registering.'])->withInput();
         }
 
         $user = User::create([
@@ -97,8 +91,8 @@ class RegisteredUserController extends Controller
             'country' => $serviceArea->name,
             'country_code' => $countryCode,
             'mobile' => $normalizedMobile,
-            'email' => $request->email,
-            'role' => $request->role,
+            'email' => $request->email ?: null,
+            'role' => User::ROLE_USER,
             'password' => Hash::make($request->password),
         ]);
 
@@ -125,6 +119,19 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+        $request->session()->forget([
+            'auth_flow',
+            'auth_login',
+            'auth_channel',
+            'auth_service_area_id',
+            'auth_requires_otp',
+            'register_verified',
+            'register_email',
+            'register_mobile',
+            'register_service_area_id',
+            'otp_sent_email',
+            'otp_sent_phone',
+        ]);
 
         return redirect(route('dashboard', absolute: false));
     }

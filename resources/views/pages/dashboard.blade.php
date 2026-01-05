@@ -52,6 +52,51 @@
             @endforeach
         </div>
 
+        @if (auth()->user()->role !== 'shop')
+            <div class="mb-8 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shop Application</p>
+                        <h3 class="mt-2 text-lg font-semibold text-foreground">Apply as a Shop</h3>
+                        <p class="mt-1 text-xs text-muted-foreground">Provide your shop details for admin approval.</p>
+                        @if ($shopApplication)
+                            <p class="mt-2 text-xs text-muted-foreground">Status: <span class="font-semibold text-foreground">{{ ucfirst($shopApplication->status) }}</span></p>
+                        @endif
+                    </div>
+                </div>
+                @if (! $shopApplication || $shopApplication->status !== 'pending')
+                    <form method="POST" action="{{ route('shop-applications.store') }}" enctype="multipart/form-data" class="mt-4 grid gap-4 md:grid-cols-2">
+                        @csrf
+                        <div>
+                            <label class="text-sm font-medium text-foreground">Shop Name</label>
+                            <input name="shop_name" value="{{ old('shop_name') }}" class="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm" required />
+                            <x-input-error :messages="$errors->get('shop_name')" class="mt-2" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-foreground">Address</label>
+                            <input name="address" value="{{ old('address') }}" class="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm" required />
+                            <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-foreground">Business Registration (PDF/Image)</label>
+                            <input type="file" name="business_registration" class="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" required />
+                            <x-input-error :messages="$errors->get('business_registration')" class="mt-2" />
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-foreground">Store Photo</label>
+                            <input type="file" name="store_photo" class="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" required />
+                            <x-input-error :messages="$errors->get('store_photo')" class="mt-2" />
+                        </div>
+                        <div class="md:col-span-2 flex justify-end">
+                            <button class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90">Submit Application</button>
+                        </div>
+                    </form>
+                @else
+                    <p class="mt-3 text-sm text-muted-foreground">Your application is under review.</p>
+                @endif
+            </div>
+        @endif
+
         @if ($activePackage)
             <div class="mb-8 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
                 <div class="flex flex-wrap items-center justify-between gap-4">

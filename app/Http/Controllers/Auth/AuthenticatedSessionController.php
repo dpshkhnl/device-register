@@ -16,8 +16,20 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(): View|\Illuminate\Http\RedirectResponse
     {
+        if (request()->boolean('reset')) {
+            request()->session()->forget([
+                'auth_flow',
+                'auth_login',
+                'auth_channel',
+                'auth_service_area_id',
+                'auth_requires_otp',
+            ]);
+        }
+        if (session('auth_flow') && session('auth_flow') !== 'existing') {
+            return redirect()->route('register');
+        }
         $settings = SystemSetting::first();
         $serviceAreas = ServiceArea::where('is_active', true)
             ->orderBy('sort_order')
@@ -35,6 +47,63 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
+    public function identify(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'service_area_id' => ['required', 'integer', 'exists:service_areas,id'],
+            'login' => ['required', 'string'],
+        ]);
+
+        $serviceArea = ServiceArea::where('id', $data['service_area_id'])
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $login = trim($data['login']);
+        $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL);
+        if (! $isEmail) {
+            $rawMobile = preg_replace('/\s+/', '', $login);
+            if (! preg_match('/^\\+?\\d{6,15}$/', $rawMobile)) {
+                return back()->withErrors(['login' => 'Enter a valid phone number.'])->withInput();
+            }
+            $normalizedMobile = str_starts_with($rawMobile, '+') ? $rawMobile : $serviceArea->dial_code.$rawMobile;
+            $loginCandidates = array_unique([$rawMobile, $normalizedMobile]);
+        }
+
+        if ($isEmail && ! $serviceArea->allow_email_login) {
+            return back()->withErrors(['login' => 'Email login is disabled for this service area.'])->withInput();
+        }
+        if (! $isEmail && ! $serviceArea->allow_phone_login) {
+            return back()->withErrors(['login' => 'Phone login is disabled for this service area.'])->withInput();
+        }
+
+        if ($isEmail) {
+            $user = \App\Models\User::where('email', $login)->first();
+        } else {
+            $user = \App\Models\User::whereIn('mobile', $loginCandidates)->first();
+        }
+
+        if (! $user) {
+            $request->session()->put([
+                'register_verified' => false,
+                'register_email' => $isEmail ? $login : null,
+                'register_mobile' => $isEmail ? null : $normalizedMobile,
+                'register_service_area_id' => $serviceArea->id,
+            ]);
+
+            return redirect()->route('register');
+        }
+
+        $request->session()->put([
+            'auth_flow' => 'existing',
+            'auth_login' => $isEmail ? $user->email : $user->mobile,
+            'auth_channel' => $isEmail ? 'email' : 'phone',
+            'auth_service_area_id' => $serviceArea->id,
+            'auth_requires_otp' => $isEmail ? (bool) $serviceArea->require_email_otp : (bool) $serviceArea->require_phone_otp,
+        ]);
+
+        return redirect()->route('login');
+    }
+
     /**
      * Handle an incoming authentication request.
      */
@@ -43,6 +112,13 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->forget([
+            'auth_flow',
+            'auth_login',
+            'auth_channel',
+            'auth_service_area_id',
+            'auth_requires_otp',
+        ]);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

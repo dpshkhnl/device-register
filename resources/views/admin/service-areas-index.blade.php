@@ -28,6 +28,7 @@
                         <th class="px-4 py-3">Dial Code</th>
                         <th class="px-4 py-3">Order</th>
                         <th class="px-4 py-3">Active</th>
+                        <th class="px-4 py-3">Auth</th>
                         <th class="px-4 py-3 text-right">Action</th>
                     </tr>
                 </thead>
@@ -39,6 +40,11 @@
                             <td class="px-4 py-3 text-xs text-slate-500">{{ $serviceArea->dial_code }}</td>
                             <td class="px-4 py-3 text-xs text-slate-500">{{ $serviceArea->sort_order }}</td>
                             <td class="px-4 py-3 text-xs text-slate-500">{{ $serviceArea->is_active ? 'Yes' : 'No' }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-500">
+                                Email {{ $serviceArea->allow_email_login ? 'On' : 'Off' }} · OTP {{ $serviceArea->require_email_otp ? 'On' : 'Off' }}
+                                <br />
+                                Phone {{ $serviceArea->allow_phone_login ? 'On' : 'Off' }} · OTP {{ $serviceArea->require_phone_otp ? 'On' : 'Off' }}
+                            </td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('admin.service-areas.edit', $serviceArea) }}" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs">Edit</a>
@@ -52,7 +58,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">No service areas yet.</td>
+                            <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">No service areas yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

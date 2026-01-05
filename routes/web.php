@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\HomeStatController as AdminHomeStatController;
 use App\Http\Controllers\Admin\HomeStepController as AdminHomeStepController;
 use App\Http\Controllers\Admin\LostReportController as AdminLostReportController;
 use App\Http\Controllers\Admin\PackageController as AdminPackageController;
+use App\Http\Controllers\Admin\ShopApplicationController as AdminShopApplicationController;
 use App\Http\Controllers\Admin\ServiceAreaController as AdminServiceAreaController;
 use App\Http\Controllers\Admin\TestimonialController as AdminTestimonialController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ShopApplicationController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\TransferController;
 use App\Models\Certificate;
@@ -57,6 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
     Route::post('/lost-found', [LostFoundController::class, 'store'])->name('lost-found.store');
     Route::post('/packages/{package}/purchase', [PackageController::class, 'purchase'])->name('packages.purchase');
+    Route::post('/shop-applications', [ShopApplicationController::class, 'store'])->name('shop-applications.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -93,6 +96,9 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
 
     Route::get('lost-stolen', [AdminLostReportController::class, 'index'])->name('lost-stolen.index');
     Route::put('lost-stolen/{report}', [AdminLostReportController::class, 'update'])->name('lost-stolen.update');
+
+    Route::get('shop-applications', [AdminShopApplicationController::class, 'index'])->name('shop-applications.index');
+    Route::put('shop-applications/{application}', [AdminShopApplicationController::class, 'update'])->name('shop-applications.update');
 
     Route::get('activity-logs', [AdminActivityLogController::class, 'index'])->name('activity-logs.index');
 

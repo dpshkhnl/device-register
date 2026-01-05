@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Models\Otp;
-use App\Models\SystemSetting;
+use App\Models\ServiceArea;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -18,13 +18,17 @@ class LoginRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $login = $this->input('login');
-        if ($login) {
-            return;
+        $serviceAreaId = $this->input('service_area_id');
+        if (! $serviceAreaId) {
+            $serviceAreaId = $this->session()->get('auth_service_area_id');
         }
 
         $email = trim((string) $this->input('email', ''));
         $mobile = trim((string) $this->input('mobile', ''));
         $countryCode = trim((string) $this->input('country_code', ''));
+        if (! $login) {
+            $login = $this->session()->get('auth_login');
+        }
 
         if ($email) {
             $login = $email;
@@ -34,6 +38,7 @@ class LoginRequest extends FormRequest
 
         $this->merge([
             'login' => $login,
+            'service_area_id' => $serviceAreaId,
         ]);
     }
 
@@ -57,6 +62,7 @@ class LoginRequest extends FormRequest
             'email' => ['nullable', 'string'],
             'country_code' => ['nullable', 'string', 'max:10'],
             'mobile' => ['nullable', 'string', 'max:20'],
+            'service_area_id' => ['nullable', 'integer', 'exists:service_areas,id'],
             'password' => ['nullable', 'string'],
             'otp' => ['nullable', 'digits:6'],
         ];
@@ -73,19 +79,43 @@ class LoginRequest extends FormRequest
 
         $login = $this->string('login')->toString();
         $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL);
-        if (! $isEmail && ! preg_match('/^\+\d{7,15}$/', $login)) {
+
+        $serviceAreaId = $this->input('service_area_id');
+        $serviceArea = $serviceAreaId
+            ? ServiceArea::where('id', $serviceAreaId)->where('is_active', true)->first()
+            : null;
+        if (! $serviceArea) {
             throw ValidationException::withMessages([
-                'login' => 'Enter email or select a service area and provide mobile number.',
+                'login' => 'Please select a valid service area.',
             ]);
         }
 
-        $field = $isEmail ? 'email' : 'mobile';
-        $credentials = [
-            $field => $login,
-            'password' => $this->input('password'),
-        ];
+        if ($isEmail && ! $serviceArea->allow_email_login) {
+            throw ValidationException::withMessages([
+                'login' => 'Email login is disabled for this service area.',
+            ]);
+        }
+        if (! $isEmail && ! $serviceArea->allow_phone_login) {
+            throw ValidationException::withMessages([
+                'login' => 'Phone login is disabled for this service area.',
+            ]);
+        }
 
-        $user = User::where($field, $login)->first();
+        $user = null;
+        $loginCandidates = [$login];
+        if ($isEmail) {
+            $user = User::where('email', $login)->first();
+        } else {
+            $rawMobile = preg_replace('/\s+/', '', $login);
+            if (! preg_match('/^\+?\d{6,15}$/', $rawMobile)) {
+                throw ValidationException::withMessages([
+                    'login' => 'Enter email or select a service area and provide mobile number.',
+                ]);
+            }
+            $normalized = str_starts_with($rawMobile, '+') ? $rawMobile : $serviceArea->dial_code.$rawMobile;
+            $loginCandidates = array_unique([$rawMobile, $normalized]);
+            $user = User::whereIn('mobile', $loginCandidates)->first();
+        }
         if (! $user) {
             RateLimiter::hit($this->throttleKey());
             throw ValidationException::withMessages([
@@ -93,13 +123,12 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        $settings = SystemSetting::first();
         $otpValue = $this->input('otp');
         $passwordValue = $this->input('password');
-        $otpEnabled = (bool) ($settings?->auth_force_otp);
+        $otpAllowed = $isEmail ? (bool) $serviceArea->require_email_otp : (bool) $serviceArea->require_phone_otp;
 
         if ($otpValue) {
-            if (! $otpEnabled) {
+            if (! $otpAllowed) {
                 throw ValidationException::withMessages([
                     'otp' => 'OTP login is disabled.',
                 ]);
@@ -111,8 +140,10 @@ class LoginRequest extends FormRequest
                 ]);
             }
 
-            $otp = Otp::where('mobile', $user->mobile)
-                ->where('purpose', 'auth_login')
+            $otpPurpose = $isEmail ? 'auth_login_email' : 'auth_login_phone';
+            $otpRecipient = $isEmail ? $user->email : $user->mobile;
+            $otp = Otp::where('mobile', $otpRecipient)
+                ->where('purpose', $otpPurpose)
                 ->first();
 
             if (! $otp || $otp->expires_at?->isPast()) {
@@ -137,6 +168,10 @@ class LoginRequest extends FormRequest
                 ]);
             }
 
+            $credentials = [
+                ($isEmail ? 'email' : 'mobile') => $isEmail ? $user->email : $user->mobile,
+                'password' => $passwordValue,
+            ];
             if (! Auth::attempt($credentials, $this->boolean('remember'))) {
                 RateLimiter::hit($this->throttleKey());
                 throw ValidationException::withMessages([

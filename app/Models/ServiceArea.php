@@ -12,5 +12,9 @@ class ServiceArea extends Model
         'dial_code',
         'sort_order',
         'is_active',
+        'allow_email_login',
+        'require_email_otp',
+        'allow_phone_login',
+        'require_phone_otp',
     ];
 }
