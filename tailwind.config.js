@@ -20,8 +20,17 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                display: ['Fraunces', 'Georgia', 'serif'],
             },
             colors: {
+                gold: {
+                    DEFAULT: 'hsl(var(--gold))',
+                    foreground: 'hsl(var(--gold-foreground))',
+                },
+                ink: {
+                    DEFAULT: 'hsl(var(--ink))',
+                    foreground: 'hsl(var(--ink-foreground))',
+                },
                 border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
