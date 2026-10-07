@@ -24,6 +24,9 @@ class DeviceCatalogSeeder extends Seeder
         'other' => 'Other',
     ];
 
+    // Products registered by serial number instead of IMEI.
+    private const SERIAL_PRODUCTS = ['laptop', 'smartwatch', 'other'];
+
     // product slug => brand => model => storage options
     protected array $catalog = [
         'smartphone' => [
@@ -364,7 +367,12 @@ class DeviceCatalogSeeder extends Seeder
         foreach (array_keys($this->products) as $index => $slug) {
             $productIds[$slug] = Product::updateOrCreate(
                 ['slug' => $slug],
-                ['name' => $this->products[$slug], 'sort_order' => $index, 'is_active' => true],
+                [
+                    'name' => $this->products[$slug],
+                    'identifier_type' => in_array($slug, self::SERIAL_PRODUCTS, true) ? Product::IDENTIFIER_SERIAL : Product::IDENTIFIER_IMEI,
+                    'sort_order' => $index,
+                    'is_active' => true,
+                ],
             )->id;
         }
 

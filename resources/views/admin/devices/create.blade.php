@@ -52,11 +52,9 @@
                         <input
                             name="imei"
                             value="{{ old('imei') }}"
-                            placeholder="Enter 15-digit IMEI"
-                            inputmode="numeric"
-                            pattern="[0-9]{15}"
-                            minlength="15"
-                            maxlength="15"
+                            placeholder="Enter IMEI or serial number"
+                            minlength="4"
+                            maxlength="50"
                             class="mt-2 h-12 w-full rounded-lg border bg-white px-4 text-sm font-mono {{ $errors->has('imei') ? 'border-rose-300 bg-rose-50/40 text-rose-700 placeholder-rose-300' : 'border-slate-200' }}"
                             required
                         />

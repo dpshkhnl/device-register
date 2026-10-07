@@ -25,6 +25,7 @@
                     <tr>
                         <th class="px-4 py-3">Name</th>
                         <th class="px-4 py-3">Slug</th>
+                        <th class="px-4 py-3">Identifier</th>
                         <th class="px-4 py-3">Models</th>
                         <th class="px-4 py-3">Order</th>
                         <th class="px-4 py-3">Active</th>
@@ -36,6 +37,7 @@
                         <tr>
                             <td class="px-4 py-3 font-semibold text-slate-900">{{ $product->name }}</td>
                             <td class="px-4 py-3 text-xs text-slate-500">{{ $product->slug }}</td>
+                            <td class="px-4 py-3 text-xs text-slate-600">{{ $product->usesSerial() ? 'Serial No.' : 'IMEI' }}</td>
                             <td class="px-4 py-3 text-xs">
                                 <a href="{{ route('admin.device-models.index', ['product_id' => $product->id]) }}" class="text-[color:var(--brand-600)]">{{ $product->device_models_count }}</a>
                             </td>
@@ -54,7 +56,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">No products yet.</td>
+                            <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">No products yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

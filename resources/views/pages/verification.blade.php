@@ -39,12 +39,10 @@
                             id="imei"
                             name="imei"
                             type="text"
-                            placeholder="Enter 15-digit IMEI"
+                            placeholder="Enter IMEI or serial number"
                             class="h-14 w-full rounded-2xl border border-border bg-background pl-12 text-base font-mono shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            inputmode="numeric"
-                            pattern="[0-9]{15}"
-                            minlength="15"
-                            maxlength="15"
+                            minlength="4"
+                            maxlength="50"
                             value="{{ old('imei', $imei ?? '') }}"
                         />
                     </div>

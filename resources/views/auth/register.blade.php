@@ -234,7 +234,8 @@
 
             {{-- ── Step 3: Set Password ── --}}
             @else
-                <form class="space-y-5" method="POST" action="{{ route('register') }}">
+                <form class="space-y-5" method="POST" action="{{ route('register') }}" enctype="multipart/form-data"
+                      x-data="{ accountType: @js(old('account_type', 'customer')) }">
                     @csrf
                     <input type="hidden" name="service_area_id" value="{{ $registerServiceAreaId }}">
                     <input type="hidden" name="email"           value="{{ $registerEmail }}">
@@ -257,6 +258,56 @@
                                placeholder="Your full name"
                                class="h-12 w-full rounded-xl border border-border bg-background px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"/>
                         <x-input-error :messages="$errors->get('name')" class="mt-1.5" />
+                    </div>
+
+                    <div>
+                        <span class="mb-1.5 block text-sm font-semibold text-foreground">Account Type</span>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm"
+                                   :class="accountType === 'customer' && 'border-primary ring-2 ring-primary/20'">
+                                <input type="radio" name="account_type" value="customer" x-model="accountType" class="h-4 w-4">
+                                <span class="font-semibold text-foreground">Customer</span>
+                            </label>
+                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm"
+                                   :class="accountType === 'shop' && 'border-primary ring-2 ring-primary/20'">
+                                <input type="radio" name="account_type" value="shop" x-model="accountType" class="h-4 w-4">
+                                <span class="font-semibold text-foreground">Shop / Reseller</span>
+                            </label>
+                        </div>
+                        <x-input-error :messages="$errors->get('account_type')" class="mt-1.5" />
+                    </div>
+
+                    <div x-show="accountType === 'shop'" @style(['display: none' => old('account_type') !== 'shop'])
+                         class="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
+                        <p class="text-xs text-muted-foreground">Shop accounts are reviewed by admin. You can use the account as a customer until it is approved.</p>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-semibold text-foreground" for="shop_name">Shop Name</label>
+                            <input id="shop_name" type="text" name="shop_name" value="{{ old('shop_name') }}" maxlength="160"
+                                   :required="accountType === 'shop'" :disabled="accountType !== 'shop'"
+                                   class="h-12 w-full rounded-xl border border-border bg-background px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"/>
+                            <x-input-error :messages="$errors->get('shop_name')" class="mt-1.5" />
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-semibold text-foreground" for="shop_address">Shop Address</label>
+                            <input id="shop_address" type="text" name="shop_address" value="{{ old('shop_address') }}" maxlength="255"
+                                   :required="accountType === 'shop'" :disabled="accountType !== 'shop'"
+                                   class="h-12 w-full rounded-xl border border-border bg-background px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"/>
+                            <x-input-error :messages="$errors->get('shop_address')" class="mt-1.5" />
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-semibold text-foreground" for="business_registration">Business Registration (PDF/Image)</label>
+                            <input id="business_registration" type="file" name="business_registration" accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                   :required="accountType === 'shop'" :disabled="accountType !== 'shop'"
+                                   class="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm shadow-sm"/>
+                            <x-input-error :messages="$errors->get('business_registration')" class="mt-1.5" />
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-semibold text-foreground" for="store_photo">Store Photo</label>
+                            <input id="store_photo" type="file" name="store_photo" accept=".jpg,.jpeg,.png,.webp"
+                                   :required="accountType === 'shop'" :disabled="accountType !== 'shop'"
+                                   class="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm shadow-sm"/>
+                            <x-input-error :messages="$errors->get('store_photo')" class="mt-1.5" />
+                        </div>
                     </div>
 
                     <div>

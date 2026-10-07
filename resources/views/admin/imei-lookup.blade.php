@@ -20,11 +20,9 @@
                         type="text"
                         name="imei"
                         value="{{ old('imei', $imei ?? '') }}"
-                        placeholder="Enter 15-digit IMEI"
-                        inputmode="numeric"
-                        pattern="[0-9]{15}"
-                        minlength="15"
-                        maxlength="15"
+                        placeholder="Enter IMEI or serial number"
+                        minlength="4"
+                        maxlength="50"
                         class="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm font-mono"
                     />
                     @error('imei')

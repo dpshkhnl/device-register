@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FooterLink;
 use App\Models\Package;
 use App\Models\SystemSetting;
+use App\Models\UserPackage;
 use Illuminate\Http\Request;
 
 class PackageController extends Controller
@@ -93,9 +94,28 @@ class PackageController extends Controller
             Package::where('is_trial', true)->where('id', '!=', $package->id)->update(['is_trial' => false]);
         }
 
+        $durationChanged = (int) $package->duration_days !== (int) ($data['duration_days'] ?? 0);
+
         $package->update($data);
 
-        return redirect()->route('admin.packages.index')->with('status', 'Package updated.');
+        // Limits are copied onto each customer's plan at purchase, so push the new values to current subscribers.
+        $activePlans = UserPackage::where('package_id', $package->id)
+            ->where('status', 'active')
+            ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()));
+
+        $synced = (clone $activePlans)->update([
+            'device_limit' => $package->device_limit,
+            'imei_limit' => $package->imei_limit,
+        ]);
+
+        if ($durationChanged) {
+            $activePlans->each(fn (UserPackage $plan) => $plan->update([
+                'ends_at' => $package->duration_days ? $plan->starts_at?->copy()->addDays($package->duration_days) : null,
+            ]));
+        }
+
+        return redirect()->route('admin.packages.index')
+            ->with('status', "Package updated. {$synced} active customer plan(s) updated.");
     }
 
     public function destroy(Package $package)

@@ -36,7 +36,7 @@ class TransferController extends Controller
     public function verifyNewOtp(Request $request)
     {
         $data = $request->validate([
-            'device_imei' => ['required', 'digits:15'],
+            'device_imei' => ['required', 'string', 'max:50'],
             'to_mobile' => ['required', 'string', 'max:20'],
             'new_owner_otp' => ['required', 'digits:6'],
         ]);
@@ -105,7 +105,7 @@ class TransferController extends Controller
         }
 
         $data = $request->validate([
-            'device_imei' => ['required', 'digits:15'],
+            'device_imei' => ['required', 'string', 'max:50'],
             'old_owner_otp' => ['required', 'digits:6'],
         ]);
 
@@ -178,7 +178,7 @@ class TransferController extends Controller
         }
 
         $rules = [
-            'device_imei' => ['required', 'digits:15'],
+            'device_imei' => ['required', 'string', 'max:50'],
         ];
 
         if ($recipient === 'new') {
@@ -303,7 +303,7 @@ class TransferController extends Controller
     public function store(Request $request, DeviceTransferService $transfers)
     {
         $data = $request->validate([
-            'device_imei' => ['required', 'digits:15'],
+            'device_imei' => ['required', 'string', 'max:50'],
             'to_mobile' => ['required', 'string', 'max:20'],
             'new_owner_otp' => ['required', 'digits:6'],
             'old_owner_otp' => ['required', 'digits:6'],

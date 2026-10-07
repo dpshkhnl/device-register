@@ -27,7 +27,6 @@ use App\Http\Controllers\KycController;
 use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ShopApplicationController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\TransferController;
 use App\Models\Certificate;
@@ -66,7 +65,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
     Route::post('/lost-found', [LostFoundController::class, 'store'])->name('lost-found.store');
     Route::post('/packages/{package}/purchase', [PackageController::class, 'purchase'])->name('packages.purchase');
-    Route::post('/shop-applications', [ShopApplicationController::class, 'store'])->name('shop-applications.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

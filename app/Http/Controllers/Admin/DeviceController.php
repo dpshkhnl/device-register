@@ -113,7 +113,7 @@ class DeviceController extends Controller
     {
         $validated = $request->validate([
             'owner_id' => ['required', 'exists:users,id'],
-            'imei' => ['required', 'digits:15', 'unique:devices,imei'],
+            'imei' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9\-\/]{4,50}$/', 'unique:devices,imei'],
             'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
             'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
@@ -195,7 +195,7 @@ class DeviceController extends Controller
         $previousStatus = $device->status;
         $validated = $request->validate([
             'owner_id' => ['required', 'exists:users,id'],
-            'imei' => ['required', 'digits:15', Rule::unique('devices', 'imei')->ignore($device->id)],
+            'imei' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9\-\/]{4,50}$/', Rule::unique('devices', 'imei')->ignore($device->id)],
             'imei2' => ['nullable', 'digits:15', Rule::unique('devices', 'imei2')->ignore($device->id), 'different:imei'],
             'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
             'model' => ['required', 'string', 'max:100'],
@@ -405,7 +405,7 @@ class DeviceController extends Controller
                 'owner_name' => ['required', 'string', 'max:255'],
                 'owner_email' => ['required', 'email'],
                 'owner_mobile' => ['nullable', 'string', 'max:20'],
-                'imei' => ['required', 'digits:15', 'unique:devices,imei'],
+                'imei' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9\-\/]{4,50}$/', 'unique:devices,imei'],
                 'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
                 'brand' => ['required', 'string', 'max:100', 'exists:brands,name'],
                 'model' => ['required', 'string', 'max:100'],

@@ -31,6 +31,17 @@ class Device extends Model
         'registered_at' => 'datetime',
     ];
 
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'device_type', 'slug');
+    }
+
+    /** "Serial No." for serial-number products, otherwise "IMEI". */
+    public function identifierLabel(): string
+    {
+        return $this->product?->usesSerial() ? 'Serial No.' : 'IMEI';
+    }
+
     public function currentOwner()
     {
         return $this->belongsTo(User::class, 'current_owner_id');

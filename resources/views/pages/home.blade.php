@@ -93,8 +93,8 @@
                     <input
                         type="text"
                         name="imei"
-                        placeholder="Enter 15-digit IMEI number…"
-                        maxlength="15"
+                        placeholder="Enter IMEI or serial number"
+                        maxlength="50"
                         class="glass-input h-14 w-full pl-12 pr-4 text-base"
                     />
                 </div>

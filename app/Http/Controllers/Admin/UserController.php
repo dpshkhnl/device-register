@@ -38,12 +38,17 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        // Admins only switch customers between Customer and Shop here.
+        if ($user->role === User::ROLE_ADMIN) {
+            return back()->withErrors(['role' => 'Admin accounts cannot be changed here.']);
+        }
+
         $data = $request->validate([
-            'role' => ['required', 'in:' . implode(',', [User::ROLE_USER, User::ROLE_SHOP, User::ROLE_ADMIN])],
+            'role' => ['required', 'in:' . implode(',', [User::ROLE_USER, User::ROLE_SHOP])],
         ]);
 
         $user->update(['role' => $data['role']]);
 
-        return redirect()->route('admin.users.index')->with('status', 'User role updated.');
+        return redirect()->route('admin.users.index')->with('status', 'Account type updated.');
     }
 }

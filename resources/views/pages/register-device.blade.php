@@ -65,8 +65,75 @@
 
                 <form class="mt-6 space-y-5" method="POST" action="{{ route('devices.store') }}" enctype="multipart/form-data">
                     @csrf
+                    <div class="space-y-5"
+                        x-data="{
+                            catalog: @js($catalog),
+                            product: @js(old('product', '')),
+                            brand: @js(old('brand', '')),
+                            model: @js(old('model', '')),
+                            storage: @js(old('storage', '')),
+                            get usesSerial() { return this.catalog.find(p => p.slug === this.product)?.identifier === 'serial'; },
+                            get brands() { return this.catalog.find(p => p.slug === this.product)?.brands ?? []; },
+                            get models() { return this.brands.find(b => b.name === this.brand)?.models ?? []; },
+                            get storages() { return this.models.find(m => m.name === this.model)?.storage ?? []; },
+                        }"
+                    >
+                    <div
+                        class="grid gap-5 sm:grid-cols-2"
+                    >
+                        <div>
+                            <label class="text-xs font-semibold text-foreground">Product <span class="text-rose-600">*</span></label>
+                            <select name="product" x-model="product" @change="brand = ''; model = ''; storage = ''" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
+                                <option value="">Select product</option>
+                                <template x-for="p in catalog" :key="p.slug">
+                                    <option :value="p.slug" x-text="p.name" :selected="p.slug === product"></option>
+                                </template>
+                            </select>
+                            @error('product')
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-foreground">Brand <span class="text-rose-600">*</span></label>
+                            <select name="brand" x-model="brand" @change="model = ''; storage = ''" :disabled="!brands.length" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
+                                <option value="">Select brand</option>
+                                <template x-for="b in brands" :key="b.name">
+                                    <option :value="b.name" x-text="b.name" :selected="b.name === brand"></option>
+                                </template>
+                            </select>
+                            @error('brand')
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-foreground">Model <span class="text-rose-600">*</span></label>
+                            <select name="model" x-model="model" @change="storage = ''" :disabled="!models.length" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
+                                <option value="">Select model</option>
+                                <template x-for="m in models" :key="m.name">
+                                    <option :value="m.name" x-text="m.name" :selected="m.name === model"></option>
+                                </template>
+                            </select>
+                            @error('model')
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-foreground">Storage (GB) <span x-show="storages.length" class="text-rose-600">*</span></label>
+                            <select name="storage" x-model="storage" :disabled="!storages.length" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
+                                <option value="" x-text="model && !storages.length ? 'Not applicable' : 'Select storage'"></option>
+                                <template x-for="s in storages" :key="s">
+                                    <option :value="s" x-text="s" :selected="s === storage"></option>
+                                </template>
+                            </select>
+                            @error('storage')
+                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div x-show="!usesSerial" class="space-y-5">
                     <div>
-                        <label class="text-xs font-semibold text-foreground">IMEI Number *</label>
+                        <label class="text-xs font-semibold text-foreground">IMEI Number <span class="text-rose-600">*</span></label>
                         <input
                             type="text"
                             name="imei"
@@ -75,7 +142,8 @@
                             pattern="[0-9]{15}"
                             minlength="15"
                             maxlength="15"
-                            required
+                            :required="!usesSerial"
+                            :disabled="usesSerial"
                             value="{{ old('imei') }}"
                             class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
@@ -95,6 +163,7 @@
                             pattern="[0-9]{15}"
                             minlength="15"
                             maxlength="15"
+                            :disabled="usesSerial"
                             value="{{ old('imei2') }}"
                             class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
@@ -103,73 +172,34 @@
                         @enderror
                         <p class="mt-2 text-xs text-muted-foreground">Leave blank if your device has only one IMEI.</p>
                     </div>
+                    </div>
 
-                    <div
-                        class="grid gap-5 sm:grid-cols-2"
-                        x-data="{
-                            catalog: @js($catalog),
-                            product: @js(old('product', '')),
-                            brand: @js(old('brand', '')),
-                            model: @js(old('model', '')),
-                            storage: @js(old('storage', '')),
-                            get brands() { return this.catalog.find(p => p.slug === this.product)?.brands ?? []; },
-                            get models() { return this.brands.find(b => b.name === this.brand)?.models ?? []; },
-                            get storages() { return this.models.find(m => m.name === this.model)?.storage ?? []; },
-                        }"
-                    >
-                        <div>
-                            <label class="text-xs font-semibold text-foreground">Product *</label>
-                            <select name="product" x-model="product" @change="brand = ''; model = ''; storage = ''" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
-                                <option value="">Select product</option>
-                                <template x-for="p in catalog" :key="p.slug">
-                                    <option :value="p.slug" x-text="p.name" :selected="p.slug === product"></option>
-                                </template>
-                            </select>
-                            @error('product')
-                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-foreground">Brand *</label>
-                            <select name="brand" x-model="brand" @change="model = ''; storage = ''" :disabled="!brands.length" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
-                                <option value="">Select brand</option>
-                                <template x-for="b in brands" :key="b.name">
-                                    <option :value="b.name" x-text="b.name" :selected="b.name === brand"></option>
-                                </template>
-                            </select>
-                            @error('brand')
-                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-foreground">Model *</label>
-                            <select name="model" x-model="model" @change="storage = ''" :disabled="!models.length" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
-                                <option value="">Select model</option>
-                                <template x-for="m in models" :key="m.name">
-                                    <option :value="m.name" x-text="m.name" :selected="m.name === model"></option>
-                                </template>
-                            </select>
-                            @error('model')
-                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-foreground">Storage (GB) <span x-show="storages.length">*</span></label>
-                            <select name="storage" x-model="storage" :disabled="!storages.length" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60">
-                                <option value="" x-text="model && !storages.length ? 'Not applicable' : 'Select storage'"></option>
-                                <template x-for="s in storages" :key="s">
-                                    <option :value="s" x-text="s" :selected="s === storage"></option>
-                                </template>
-                            </select>
-                            @error('storage')
-                                <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                    <div x-show="usesSerial" style="display: none">
+                        <label class="text-xs font-semibold text-foreground">Serial Number <span class="text-rose-600">*</span></label>
+                        <input
+                            type="text"
+                            name="imei"
+                            placeholder="Enter device serial number"
+                            autocapitalize="characters"
+                            minlength="4"
+                            maxlength="50"
+                            :required="usesSerial"
+                            :disabled="!usesSerial"
+                            disabled
+                            value="{{ old('imei') }}"
+                            class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-base font-mono uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                        @error('imei')
+                            <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-2 text-xs text-muted-foreground">Find it on the back of the device, the box, or in Settings → About.</p>
+                    </div>
+
                     </div>
 
                     <div class="space-y-5" x-data="{ purchaseType: @js(old('purchase_type', 'new')) }">
                     <div>
-                        <label class="text-xs font-semibold text-foreground">Purchase Type *</label>
+                        <label class="text-xs font-semibold text-foreground">Purchase Type <span class="text-rose-600">*</span></label>
                         <div class="mt-3 grid gap-4 sm:grid-cols-2">
                             <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-muted/30 p-4">
                                 <input type="radio" name="purchase_type" value="new" x-model="purchaseType" class="h-4 w-4" @checked(old('purchase_type', 'new') === 'new') />
@@ -193,14 +223,23 @@
 
                     <div class="grid gap-5 sm:grid-cols-2">
                         <div x-show="purchaseType === 'new'" @style(['display: none' => old('purchase_type', 'new') !== 'new'])>
-                            <label class="text-xs font-semibold text-foreground">Purchase Date *</label>
-                            <input type="date" name="purchase_date" value="{{ old('purchase_date') }}" max="{{ now()->toDateString() }}" :disabled="purchaseType !== 'new'" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm" />
+                            <label class="text-xs font-semibold text-foreground">Purchase Date <span class="text-rose-600">*</span></label>
+                            <input
+                                type="text"
+                                name="purchase_date"
+                                value="{{ old('purchase_date') }}"
+                                placeholder="Select purchase date"
+                                x-init="flatpickr($el, { maxDate: 'today', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd M Y', disableMobile: true })"
+                                :disabled="purchaseType !== 'new'"
+                                class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm"
+                            />
+                            <p class="mt-2 text-xs text-muted-foreground">Today or an earlier date.</p>
                             @error('purchase_date')
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div x-show="purchaseType === 'secondhand'" @style(['display: none' => old('purchase_type', 'new') !== 'secondhand'])>
-                            <label class="text-xs font-semibold text-foreground">How old is the device? *</label>
+                            <label class="text-xs font-semibold text-foreground">How old is the device? <span class="text-rose-600">*</span></label>
                             <select name="device_age" :disabled="purchaseType !== 'secondhand'" class="mt-2 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm">
                                 <option value="">Select device age</option>
                                 @foreach ($deviceAges as $age)
@@ -211,9 +250,34 @@
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @enderror
                         </div>
-                        <div>
+                        <div class="sm:col-span-2" x-data="{ preview: null, name: '', isImage: false }">
                             <label class="text-xs font-semibold text-foreground">Invoice (optional)</label>
-                            <input type="file" name="invoice" class="mt-2 w-full rounded-xl border border-border bg-background px-4 py-2 text-sm" />
+                            <input
+                                type="file"
+                                name="invoice"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                x-ref="invoice"
+                                @change="
+                                    const file = $event.target.files[0];
+                                    if (preview) URL.revokeObjectURL(preview);
+                                    preview = file ? URL.createObjectURL(file) : null;
+                                    name = file?.name ?? '';
+                                    isImage = !!file && file.type.startsWith('image/');
+                                "
+                                class="mt-2 w-full rounded-xl border border-border bg-background px-4 py-2 text-sm"
+                            />
+                            <div x-show="preview" style="display: none" class="mt-3 overflow-hidden rounded-xl border border-border bg-muted/30">
+                                <template x-if="isImage">
+                                    <img :src="preview" alt="Invoice preview" class="max-h-80 w-full bg-white object-contain" />
+                                </template>
+                                <template x-if="!isImage">
+                                    <iframe :src="preview" title="Invoice preview" class="h-80 w-full bg-white"></iframe>
+                                </template>
+                                <div class="flex items-center justify-between gap-3 border-t border-border px-4 py-2">
+                                    <span class="truncate text-xs text-muted-foreground" x-text="name"></span>
+                                    <button type="button" @click="URL.revokeObjectURL(preview); preview = null; name = ''; $refs.invoice.value = ''" class="shrink-0 text-xs font-semibold text-rose-600 hover:text-rose-700">Remove</button>
+                                </div>
+                            </div>
                             @error('invoice')
                                 <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
                             @enderror
@@ -229,4 +293,12 @@
         </div>
     </div>
 </section>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+<style>
+    /* Future dates: clearly unavailable. */
+    .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color: #cbd5e1; text-decoration: line-through; }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover { background: #0e7c86; border-color: #0e7c86; }
+</style>
 @endsection

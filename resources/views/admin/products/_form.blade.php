@@ -11,6 +11,15 @@
         <x-input-error :messages="$errors->get('slug')" class="mt-2" />
     </div>
 </div>
+<div>
+    <label class="text-sm font-medium text-slate-700">Device Identifier</label>
+    <select name="identifier_type" class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+        <option value="imei" @selected(old('identifier_type', $product?->identifier_type ?? 'imei') === 'imei')>IMEI number (phones, tablets with SIM)</option>
+        <option value="serial" @selected(old('identifier_type', $product?->identifier_type) === 'serial')>Serial number (laptops, watches, etc.)</option>
+    </select>
+    <p class="mt-1 text-xs text-slate-400">Which number customers enter when registering this product.</p>
+    <x-input-error :messages="$errors->get('identifier_type')" class="mt-2" />
+</div>
 <div class="grid gap-4 sm:grid-cols-2">
     <div>
         <label class="text-sm font-medium text-slate-700">Sort Order</label>

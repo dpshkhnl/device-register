@@ -32,20 +32,37 @@ class DeviceController extends Controller
             return back()->withErrors(['package' => $packageError])->withInput();
         }
 
+        $usesSerial = (bool) Product::where('slug', $request->input('product'))
+            ->where('is_active', true)
+            ->first()?->usesSerial();
+        if ($usesSerial) {
+            $request->merge(['imei' => strtoupper(trim((string) $request->input('imei'))), 'imei2' => null]);
+        }
+
         $validated = $request->validate([
-            'imei' => ['required', 'digits:15', 'unique:devices,imei'],
-            'imei2' => ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
+            'imei' => $usesSerial
+                ? ['required', 'string', 'min:4', 'max:50', 'regex:/^[A-Z0-9\-\/]+$/', 'unique:devices,imei']
+                : ['required', 'digits:15', 'unique:devices,imei'],
+            'imei2' => $usesSerial
+                ? ['nullable']
+                : ['nullable', 'digits:15', 'unique:devices,imei2', 'different:imei'],
             'product' => ['required', 'string', 'max:50'],
             'brand' => ['required', 'string', 'max:100'],
             'model' => ['required', 'string', 'max:120'],
             'storage' => ['nullable', 'string', 'max:20'],
             'purchase_type' => ['required', 'in:new,secondhand'],
-            'purchase_date' => ['required_if:purchase_type,new', 'nullable', 'date', 'before_or_equal:today'],
+            // Nepal time, so a purchase "today" just after local midnight isn't rejected as future (app runs in UTC).
+            'purchase_date' => ['required_if:purchase_type,new', 'nullable', 'date', 'before_or_equal:'.now('Asia/Kathmandu')->toDateString()],
             'device_age' => [
                 'required_if:purchase_type,secondhand', 'nullable', 'string',
                 Rule::exists('device_age_options', 'label')->where('is_active', true),
             ],
             'invoice' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
+        ], [
+            'purchase_date.before_or_equal' => 'Purchase date cannot be in the future.',
+            'purchase_date.required_if' => 'Purchase date is required for a brand new device.',
+            'imei.regex' => 'Serial number may only contain letters, numbers, - and /.',
+            'imei.unique' => $usesSerial ? 'This serial number is already registered.' : 'This IMEI is already registered.',
         ]);
 
         $deviceModel = DeviceModel::query()
@@ -87,7 +104,7 @@ class DeviceController extends Controller
 
         $deviceLabel = trim($device->brand.' '.$device->model.' '.$device->storage);
         $subject = 'Device registered';
-        $message = "Your device {$deviceLabel} (IMEI {$device->imei}) has been registered successfully.";
+        $message = "Your device {$deviceLabel} ({$device->identifierLabel()} {$device->imei}) has been registered successfully.";
         $notifier->sendEmail($request->user()->email, $subject, $message);
         $notifier->sendSms($request->user()->mobile, $message);
 
@@ -126,7 +143,7 @@ class DeviceController extends Controller
 
         if ($imei !== null && $imei !== '') {
             $request->validate([
-                'imei' => ['required', 'digits:15'],
+                'imei' => ['required', 'string', 'max:50'],
             ]);
 
             if ($request->user()) {

@@ -28,7 +28,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Device Details</p>
                         <h1 class="mt-2 text-2xl font-bold text-foreground">{{ $device->brand }} {{ $device->model }} {{ $device->storage }}</h1>
-                        <p class="mt-2 text-sm text-muted-foreground">IMEI {{ $device->imei }}</p>
+                        <p class="mt-2 text-sm text-muted-foreground">{{ $device->identifierLabel() }} {{ $device->imei }}</p>
                         @if ($device->imei2)
                             <p class="mt-1 text-sm text-muted-foreground">IMEI 2 {{ $device->imei2 }}</p>
                         @endif

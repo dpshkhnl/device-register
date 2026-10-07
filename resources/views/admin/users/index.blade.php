@@ -33,6 +33,7 @@
                         <th class="px-6 py-4">SN</th>
                         <th class="px-6 py-4">Customer</th>
                         <th class="px-6 py-4">Contact</th>
+                        <th class="px-6 py-4">Type</th>
                         <th class="px-6 py-4">Package</th>
                         <th class="px-6 py-4">Expiry</th>
                         <th class="px-6 py-4">Status</th>
@@ -62,6 +63,21 @@
                             <td class="px-6 py-4">
                                 <p class="text-sm font-semibold text-slate-900">{{ $user->mobile ?? '—' }}</p>
                                 <p class="text-xs text-slate-500">{{ $user->country ?? '—' }}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                @if ($user->role === \App\Models\User::ROLE_ADMIN)
+                                    <span class="inline-flex rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white">Admin</span>
+                                @else
+                                    <form method="POST" action="{{ route('admin.users.update', $user) }}">
+                                        @csrf
+                                        @method('PUT')
+                                        <select name="role" onchange="if (confirm('Change account type for {{ addslashes($user->name) }}?')) this.form.submit(); else this.value = '{{ $user->role }}';"
+                                            class="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                                            <option value="{{ \App\Models\User::ROLE_USER }}" @selected($user->role === \App\Models\User::ROLE_USER)>Customer</option>
+                                            <option value="{{ \App\Models\User::ROLE_SHOP }}" @selected($user->role === \App\Models\User::ROLE_SHOP)>Shop</option>
+                                        </select>
+                                    </form>
+                                @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-700">
                                 {{ $activePackage?->package?->name ?? '—' }}

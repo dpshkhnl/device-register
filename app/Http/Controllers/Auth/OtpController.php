@@ -137,7 +137,7 @@ class OtpController extends Controller
             }
         }
 
-        $cooldownSeconds = max((int) ($emailOtp['cooldown'] ?? 0), (int) ($mobileOtp['cooldown'] ?? 0));
+        $cooldownSeconds = max((int) ($emailOtp['resend_seconds'] ?? 0), (int) ($mobileOtp['resend_seconds'] ?? 0));
 
         if ($request->expectsJson()) {
             if (isset($emailOtp['otp'])) {
@@ -330,7 +330,7 @@ class OtpController extends Controller
                     'status' => 'OTP sent to your email.',
                     'channel' => 'email',
                     'dev_otp_login_email' => $otp['otp'],
-                    'resend_seconds' => $otp['cooldown'] ?? null,
+                    'resend_seconds' => $otp['resend_seconds'] ?? null,
                 ]);
             }
             return back()->withInput()->with('dev_otp_login_email', $otp['otp']);
@@ -356,7 +356,7 @@ class OtpController extends Controller
                 'status' => 'OTP sent to your phone.',
                 'channel' => 'phone',
                 'dev_otp_login_phone' => $otp['otp'],
-                'resend_seconds' => $otp['cooldown'] ?? null,
+                'resend_seconds' => $otp['resend_seconds'] ?? null,
             ]);
         }
         return back()->withInput()->with('dev_otp_login_phone', $otp['otp']);
@@ -414,6 +414,6 @@ class OtpController extends Controller
             $notifier->sendSms($recipient, $otpMessage);
         }
 
-        return ['otp' => $otpCode, 'cooldown' => $resendSeconds];
+        return ['otp' => $otpCode, 'resend_seconds' => $resendSeconds];
     }
 }

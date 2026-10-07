@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
-use App\Models\ShopApplication;
 use App\Models\TransferRequest;
 use Illuminate\Http\Request;
 
@@ -50,10 +49,6 @@ class DashboardController extends Controller
 
         $activePackage = $user->activePackage()->with('package')->first();
 
-        $shopApplication = ShopApplication::where('user_id', $user->id)
-            ->latest()
-            ->first();
-
-        return view('pages.dashboard', compact('devices', 'stats', 'pendingTransfers', 'outgoingPendingTransfers', 'recentTransfers', 'activePackage', 'shopApplication'));
+        return view('pages.dashboard', compact('devices', 'stats', 'pendingTransfers', 'outgoingPendingTransfers', 'recentTransfers', 'activePackage'));
     }
 }

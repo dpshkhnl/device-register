@@ -57,6 +57,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'slug' => ['required', 'string', 'max:50', 'unique:products,slug'.($product ? ','.$product->id : '')],
+            'identifier_type' => ['required', 'in:'.Product::IDENTIFIER_IMEI.','.Product::IDENTIFIER_SERIAL],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
         ]);

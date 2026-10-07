@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\ServiceArea;
+use App\Models\ShopApplication;
 use App\Models\User;
 use App\Models\UserPackage;
 use App\Services\DeviceTransferService;
@@ -47,6 +48,11 @@ class RegisteredUserController extends Controller
             'email' => ['nullable', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terms' => ['accepted'],
+            'account_type' => ['nullable', 'in:customer,shop'],
+            'shop_name' => ['required_if:account_type,shop', 'nullable', 'string', 'max:160'],
+            'shop_address' => ['required_if:account_type,shop', 'nullable', 'string', 'max:255'],
+            'business_registration' => ['required_if:account_type,shop', 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
+            'store_photo' => ['required_if:account_type,shop', 'nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         if (! $request->filled('email') && ! $request->filled('mobile')) {
@@ -96,6 +102,18 @@ class RegisteredUserController extends Controller
             'role' => User::ROLE_USER,
             'password' => Hash::make($request->password),
         ]);
+
+        // Shops sign up as customers; an admin approves the application to switch them to shop.
+        if ($request->input('account_type') === 'shop') {
+            ShopApplication::create([
+                'user_id' => $user->id,
+                'shop_name' => $request->shop_name,
+                'address' => $request->shop_address,
+                'business_registration_path' => $request->file('business_registration')->store('shop-applications', 'public'),
+                'store_photo_path' => $request->file('store_photo')->store('shop-applications', 'public'),
+                'status' => 'pending',
+            ]);
+        }
 
         app(DeviceTransferService::class)->claimPendingFor($user);
 

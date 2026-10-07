@@ -9,6 +9,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'slug',
+        'identifier_type',
         'sort_order',
         'is_active',
     ];
@@ -16,6 +17,14 @@ class Product extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public const IDENTIFIER_IMEI = 'imei';
+    public const IDENTIFIER_SERIAL = 'serial';
+
+    public function usesSerial(): bool
+    {
+        return $this->identifier_type === self::IDENTIFIER_SERIAL;
+    }
 
     public function deviceModels()
     {
@@ -46,6 +55,7 @@ class Product extends Model
             ->map(fn (Product $product) => [
                 'slug' => $product->slug,
                 'name' => $product->name,
+                'identifier' => $product->identifier_type,
                 'brands' => ($models[$product->id] ?? collect())
                     ->groupBy('brand_name')
                     ->map(fn ($brandModels, $brandName) => [
