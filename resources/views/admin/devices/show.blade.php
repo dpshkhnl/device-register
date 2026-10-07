@@ -7,7 +7,7 @@
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
                 <a href="{{ route('admin.devices.index') }}" class="text-xs font-semibold text-slate-500 hover:text-slate-700">Back to Devices</a>
-                <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $device->brand }} {{ $device->model }}</h1>
+                <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ $device->brand }} {{ $device->model }} {{ $device->storage }}</h1>
                 <p class="text-sm text-slate-500">IMEI <span class="font-mono text-xs">{{ $device->imei }}</span></p>
                 @if ($device->imei2)
                     <p class="text-sm text-slate-500">IMEI 2 <span class="font-mono text-xs">{{ $device->imei2 }}</span></p>
@@ -60,8 +60,8 @@
                     <p class="mt-2 font-semibold text-slate-900">{{ $device->purchase_type ?? '-' }}</p>
                 </div>
                 <div class="rounded-xl border border-slate-100 p-4">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Purchase Date</p>
-                    <p class="mt-2 font-semibold text-slate-900">{{ $device->purchase_date?->format('M d, Y') ?? '-' }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">{{ $device->device_age ? 'Device Age' : 'Purchase Date' }}</p>
+                    <p class="mt-2 font-semibold text-slate-900">{{ $device->device_age ?? $device->purchase_date?->format('M d, Y') ?? '-' }}</p>
                 </div>
                 <div class="rounded-xl border border-slate-100 p-4">
                     <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Current Status</p>

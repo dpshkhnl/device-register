@@ -7,6 +7,7 @@ use App\Models\Package;
 use App\Models\ServiceArea;
 use App\Models\User;
 use App\Models\UserPackage;
+use App\Services\DeviceTransferService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -95,6 +96,8 @@ class RegisteredUserController extends Controller
             'role' => User::ROLE_USER,
             'password' => Hash::make($request->password),
         ]);
+
+        app(DeviceTransferService::class)->claimPendingFor($user);
 
         $trialPackage = Package::where('is_trial', true)
             ->where('is_active', true)

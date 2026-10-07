@@ -2,7 +2,7 @@
 
 @section('content')
 <section class="relative overflow-hidden bg-background py-12 lg:py-16">
-    <div class="pointer-events-none absolute inset-0 opacity-25"
+    <div class="pointer-events-none absolute inset-0 hidden opacity-25 lg:block"
         style="background-image: url('/images/hero-device.svg'); background-repeat: no-repeat; background-position: left 6% top 12%; background-size: 220px;">
     </div>
     <div class="container max-w-5xl">
@@ -108,7 +108,7 @@
                     {{ session('status') }}
                 </div>
             @endif
-            <form method="POST" action="{{ route('transfer.store') }}" class="mt-6 space-y-6" data-transfer-steps data-initial-step="{{ $activeStep }}" data-swal-confirm data-swal-title="Submit transfer request?" data-swal-text="The new owner must accept it to complete." data-swal-confirm="Yes, submit">
+            <form method="POST" action="{{ route('transfer.store') }}" class="mt-6 space-y-6" data-transfer-steps data-initial-step="{{ $activeStep }}" data-swal-confirm data-swal-title="Transfer this device?" data-swal-text="Ownership moves to the new owner immediately. This cannot be undone." data-swal-confirm="Yes, transfer">
                 @csrf
                 <div class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" data-status></div>
                 <div class="rounded-2xl border border-border bg-muted/20 p-4 {{ $activeStep === 1 ? '' : 'hidden' }}" data-step="1">
@@ -328,7 +328,7 @@
 
                     <div class="mt-4 flex flex-wrap items-center gap-3">
                         <button type="submit" class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90" {{ $devices->isEmpty() ? 'disabled' : '' }}>
-                            Initiate Transfer
+                            Transfer Device
                         </button>
                         <button type="button" class="inline-flex h-12 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground" data-step-prev="3">
                             Back

@@ -192,6 +192,19 @@
                     </svg>
                     Activity Log
                 </a>
+                <a href="{{ route('admin.kyc.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.kyc.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="5" width="18" height="14" rx="2"/>
+                        <circle cx="9" cy="11" r="2"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 16c.6-1.5 1.7-2 3-2s2.4.5 3 2M14 10h4M14 13h3"/>
+                    </svg>
+                    KYC Verification
+                    @php $pendingKyc = \App\Models\User::where('kyc_status', \App\Models\User::KYC_PENDING)->count(); @endphp
+                    @if ($pendingKyc)
+                        <span class="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">{{ $pendingKyc }}</span>
+                    @endif
+                </a>
                 <a href="{{ route('admin.brands.index') }}"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.brands.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
                     <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -199,6 +212,29 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6"/>
                     </svg>
                     Brands
+                </a>
+                <a href="{{ route('admin.products.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.products.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v4H4zM14 15h6v4h-6z"/>
+                    </svg>
+                    Products
+                </a>
+                <a href="{{ route('admin.device-models.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.device-models.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="7" y="3" width="10" height="18" rx="2"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 17h2"/>
+                    </svg>
+                    Device Models
+                </a>
+                <a href="{{ route('admin.device-ages.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.device-ages.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">
+                    <svg class="h-5 w-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/>
+                    </svg>
+                    Device Age Options
                 </a>
                 <a href="{{ route('admin.service-areas.index') }}"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.service-areas.*') ? 'bg-[color:var(--brand-100)] text-[color:var(--brand-600)]' : 'text-slate-600 hover:bg-slate-100' }}">

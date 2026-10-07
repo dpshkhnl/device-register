@@ -19,6 +19,13 @@
             </a>
         </div>
 
+        @unless (auth()->user()->hasKyc())
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <span>Complete your KYC before reporting a device lost.</span>
+                <a href="{{ route('profile.edit') }}#kyc" class="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">Complete KYC</a>
+            </div>
+        @endunless
+
         @if (session('status'))
             <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                 {{ session('status') }}

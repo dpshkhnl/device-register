@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\LostReport;
+use App\Http\Middleware\EnsureKycSubmitted;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
@@ -38,6 +39,11 @@ class LostFoundController extends Controller
             'incident_location' => ['required_if:action,lost', 'nullable', 'string', 'max:255'],
             'password' => ['required', 'current_password'],
         ]);
+
+        // Marking found stays open so owners are never stuck with a lost flag.
+        if ($data['action'] === 'lost' && ! $request->user()->hasKyc()) {
+            return redirect()->to(route('profile.edit').'#kyc')->with('kyc_required', EnsureKycSubmitted::MESSAGE);
+        }
 
         $device = Device::where('id', $data['device_id'])
             ->where('current_owner_id', $request->user()->id)

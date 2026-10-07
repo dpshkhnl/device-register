@@ -3,6 +3,9 @@
 use App\Http\Controllers\Admin\ActivityLogController as AdminActivityLogController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\BrandController as AdminBrandController;
+use App\Http\Controllers\Admin\DeviceAgeOptionController as AdminDeviceAgeOptionController;
+use App\Http\Controllers\Admin\DeviceModelController as AdminDeviceModelController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DeviceController as AdminDeviceController;
 use App\Http\Controllers\Admin\FooterLinkController as AdminFooterLinkController;
@@ -10,6 +13,7 @@ use App\Http\Controllers\Admin\HomeFeatureController as AdminHomeFeatureControll
 use App\Http\Controllers\Admin\HomeBannerController as AdminHomeBannerController;
 use App\Http\Controllers\Admin\HomeStatController as AdminHomeStatController;
 use App\Http\Controllers\Admin\HomeStepController as AdminHomeStepController;
+use App\Http\Controllers\Admin\KycController as AdminKycController;
 use App\Http\Controllers\Admin\LostReportController as AdminLostReportController;
 use App\Http\Controllers\Admin\PackageController as AdminPackageController;
 use App\Http\Controllers\Admin\ShopApplicationController as AdminShopApplicationController;
@@ -19,6 +23,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\KycController;
 use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\ProfileController;
@@ -49,11 +54,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/devices/create', [DeviceController::class, 'create'])->name('devices.create');
     Route::post('/devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::get('/devices/{device}', [DeviceController::class, 'show'])->name('devices.show');
-    Route::get('/transfer', [TransferController::class, 'create'])->name('transfer');
-    Route::post('/transfer/otp', [TransferController::class, 'sendOtp'])->name('transfer.otp');
-    Route::post('/transfer/verify-new', [TransferController::class, 'verifyNewOtp'])->name('transfer.verify.new');
-    Route::post('/transfer/verify-old', [TransferController::class, 'verifyOldOtp'])->name('transfer.verify.old');
-    Route::post('/transfer', [TransferController::class, 'store'])->name('transfer.store');
+    Route::middleware('kyc')->group(function () {
+        Route::get('/transfer', [TransferController::class, 'create'])->name('transfer');
+        Route::post('/transfer/otp', [TransferController::class, 'sendOtp'])->name('transfer.otp');
+        Route::post('/transfer/verify-new', [TransferController::class, 'verifyNewOtp'])->name('transfer.verify.new');
+        Route::post('/transfer/verify-old', [TransferController::class, 'verifyOldOtp'])->name('transfer.verify.old');
+        Route::post('/transfer', [TransferController::class, 'store'])->name('transfer.store');
+    });
     Route::post('/transfer/{transfer}/accept', [TransferController::class, 'accept'])->name('transfer.accept');
     Route::post('/transfer/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfer.cancel');
     Route::get('/lost-found', [LostFoundController::class, 'index'])->name('lost-found.index');
@@ -64,6 +71,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/kyc', [KycController::class, 'update'])->name('profile.kyc.update');
+    Route::get('/profile/kyc/{document}', [KycController::class, 'file'])->name('profile.kyc.file');
 });
 
 Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -93,6 +102,13 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::resource('packages', AdminPackageController::class)->except('show');
     Route::resource('service-areas', AdminServiceAreaController::class)->except('show');
     Route::resource('brands', AdminBrandController::class)->except('show');
+    Route::resource('products', AdminProductController::class)->except('show');
+    Route::resource('device-models', AdminDeviceModelController::class)->except('show');
+    Route::resource('device-ages', AdminDeviceAgeOptionController::class)->except('show');
+    Route::get('kyc', [AdminKycController::class, 'index'])->name('kyc.index');
+    Route::get('kyc/{user}', [AdminKycController::class, 'show'])->name('kyc.show');
+    Route::put('kyc/{user}', [AdminKycController::class, 'update'])->name('kyc.update');
+    Route::get('kyc/{user}/{document}', [AdminKycController::class, 'file'])->name('kyc.file');
 
     Route::get('lost-stolen', [AdminLostReportController::class, 'index'])->name('lost-stolen.index');
     Route::put('lost-stolen/{report}', [AdminLostReportController::class, 'update'])->name('lost-stolen.update');

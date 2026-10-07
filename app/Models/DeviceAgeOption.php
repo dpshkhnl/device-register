@@ -4,16 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Brand extends Model
+class DeviceAgeOption extends Model
 {
     protected $fillable = [
-        'name',
+        'label',
         'sort_order',
         'is_active',
     ];
 
-    public function deviceModels()
-    {
-        return $this->hasMany(DeviceModel::class);
-    }
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 }

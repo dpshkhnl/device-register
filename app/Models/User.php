@@ -17,6 +17,19 @@ class User extends Authenticatable
     public const ROLE_ADMIN = 'admin';
     public const ROLE_AUTHORITY = 'authority';
 
+    public const KYC_NOT_SUBMITTED = 'not_submitted';
+    public const KYC_PENDING = 'pending';
+    public const KYC_APPROVED = 'approved';
+    public const KYC_REJECTED = 'rejected';
+
+    public const KYC_ID_TYPES = [
+        'citizenship' => 'Citizenship',
+        'national_id' => 'National ID',
+        'passport' => 'Passport',
+        'driving_license' => 'Driving License',
+        'voter_id' => 'Voter ID',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -52,7 +65,32 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'kyc_submitted_at' => 'datetime',
+            'kyc_reviewed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Submitted KYC (pending review or approved) unlocks transfers and lost reports.
+     */
+    public function hasKyc(): bool
+    {
+        return in_array($this->kyc_status, [self::KYC_PENDING, self::KYC_APPROVED], true);
+    }
+
+    public function kycStatusLabel(): string
+    {
+        return match ($this->kyc_status) {
+            self::KYC_PENDING => 'Under review',
+            self::KYC_APPROVED => 'Verified',
+            self::KYC_REJECTED => 'Rejected',
+            default => 'Not submitted',
+        };
+    }
+
+    public function kycReviewer()
+    {
+        return $this->belongsTo(User::class, 'kyc_reviewed_by');
     }
 
     public function devices()
