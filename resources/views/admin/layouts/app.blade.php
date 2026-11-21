@@ -70,6 +70,7 @@
             </main>
         </div>
     </div>
+    @include('partials.image-preview')
     @stack('scripts')
 </body>
 </html>

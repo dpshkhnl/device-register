@@ -255,6 +255,7 @@
                             <input
                                 type="file"
                                 name="invoice"
+                                data-no-preview
                                 accept=".pdf,.jpg,.jpeg,.png,.webp"
                                 x-ref="invoice"
                                 @change="

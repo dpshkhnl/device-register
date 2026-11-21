@@ -501,11 +501,11 @@
 
                 if (button.dataset.ajaxAction === 'send') {
                     if (data.status) setStatus(data.status);
-                    if (recipient === 'new' && devOtpNew) {
+                    if (recipient === 'new' && devOtpNew && data.dev_otp) {
                         devOtpNew.textContent = `Dev OTP (new owner): ${data.dev_otp}`;
                         devOtpNew.classList.remove('hidden');
                     }
-                    if (recipient === 'old' && devOtpOld) {
+                    if (recipient === 'old' && devOtpOld && data.dev_otp) {
                         devOtpOld.textContent = `Dev OTP (old owner): ${data.dev_otp}`;
                         devOtpOld.classList.remove('hidden');
                     }

@@ -37,7 +37,7 @@
     })->values();
 
     $heroTitle         = $settings?->hero_title         ?? 'Secure Your Mobile Devices';
-    $heroSubtitle      = $settings?->hero_subtitle      ?? 'Verify IMEI, register devices, and protect yourself from fraud with the official national device registry.';
+    $heroSubtitle      = $settings?->hero_subtitle      ?? 'Verify IMEI, register devices, and protect yourself from fraud with the national device registry.';
     $heroPrimaryLabel  = $settings?->hero_primary_label ?? 'Register Device';
     $heroPrimaryUrl    = $settings?->hero_primary_url   ?? route('register-device');
     $heroSecondaryLabel= $settings?->hero_secondary_label ?? 'Check Status';
@@ -66,7 +66,7 @@
             {{-- Badge --}}
             <div class="mb-5 inline-flex items-center rounded-md border px-3 py-1 text-xs font-medium tracking-wide"
                  style="border-color: rgba(45,212,200,0.3); color: #7fe4da; background: rgba(45,212,200,0.08);">
-                Official device registry platform
+                Device registry platform
             </div>
 
             {{-- Headline (from slides) --}}
@@ -162,7 +162,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-semibold text-foreground">Certified Status</p>
-                    <p class="text-xs text-muted-foreground">Download official proof</p>
+                    <p class="text-xs text-muted-foreground">Download proof</p>
                 </div>
             </div>
 
@@ -245,7 +245,7 @@
                     [
                         'icon' => 'certificate',
                         'title' => 'Status Certificate',
-                        'description' => 'Download official PDF certificates with QR verification for proof of device status.',
+                        'description' => 'Download PDF certificates with QR verification for proof of device status.',
                         'button_label' => 'Get Certificate',
                         'icon_color' => '#33465b',
                         'icon_bg' => 'rgba(51,70,91,0.1)',
@@ -327,7 +327,7 @@
                     ['title' => 'IMEI Verification', 'description' => 'Enter the 15-digit IMEI number to instantly check device status and history.', 'icon' => 'list'],
                     ['title' => 'Register / Transfer', 'description' => 'Register your device or transfer ownership securely with OTP verification.', 'icon' => 'device'],
                     ['title' => 'Report Lost / Stolen', 'description' => 'Report missing devices to flag them and prevent unauthorized use.', 'icon' => 'alert'],
-                    ['title' => 'Get Certificate', 'description' => 'Download your official status certificate with QR code verification.', 'icon' => 'certificate'],
+                    ['title' => 'Get Certificate', 'description' => 'Download your status certificate with QR code verification.', 'icon' => 'certificate'],
                 ]);
             }
         @endphp
@@ -513,7 +513,7 @@
                     @foreach ([
                         ['title' => 'Prevent Fraud',       'desc' => 'Verify device authenticity before purchase to avoid stolen or counterfeit devices.', 'icon_bg' => 'rgba(179,38,30,0.1)', 'icon_clr' => '#b3261e'],
                         ['title' => 'Secure Transactions', 'desc' => 'Safe second-hand purchases with verified ownership history and audit trails.', 'icon_bg' => 'rgba(14,124,134,0.1)', 'icon_clr' => '#0e7c86'],
-                        ['title' => 'Official Records',    'desc' => 'Government-backed records with tamper-proof logs and digital certificates.', 'icon_bg' => 'rgba(200,151,62,0.12)', 'icon_clr' => '#9c6b1f'],
+                        ['title' => 'Verified Records',    'desc' => 'Government-backed records with tamper-proof logs and digital certificates.', 'icon_bg' => 'rgba(200,151,62,0.12)', 'icon_clr' => '#9c6b1f'],
                         ['title' => 'Authority Backed',    'desc' => 'Integrated with law enforcement for comprehensive device tracking nationwide.', 'icon_bg' => 'rgba(51,70,91,0.1)', 'icon_clr' => '#33465b'],
                     ] as $benefit)
                         <div class="flex gap-4">

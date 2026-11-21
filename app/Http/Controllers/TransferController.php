@@ -262,13 +262,15 @@ class TransferController extends Controller
             ]
         );
 
+        $devOtp = app()->environment('local') ? $otpCode : null;
+
         $otpMessage = "Your transfer OTP is {$otpCode}. It expires in 10 minutes.";
         $notifier->sendSms($targetMobile, $otpMessage);
 
         $response = back()
             ->withInput()
             ->with('status', $recipient === 'old' ? 'OTP sent to your number.' : 'OTP sent to '.$targetMobile.'.')
-            ->with('otp_hint', $otpCode)
+            ->with('otp_hint', $devOtp)
             ->with('otp_device', $device->imei)
             ->with('otp_new_sent', $recipient === 'new')
             ->with('otp_old_sent', $recipient === 'old')
@@ -282,9 +284,9 @@ class TransferController extends Controller
         }
 
         if ($recipient === 'new') {
-            $response->with('dev_otp_new', $otpCode);
+            $response->with('dev_otp_new', $devOtp);
         } else {
-            $response->with('dev_otp_old', $otpCode);
+            $response->with('dev_otp_old', $devOtp);
         }
 
         if ($request->expectsJson()) {
@@ -292,7 +294,7 @@ class TransferController extends Controller
                 'ok' => true,
                 'recipient' => $recipient,
                 'status' => $recipient === 'old' ? 'OTP sent to your number.' : 'OTP sent to '.$targetMobile.'.',
-                'dev_otp' => $otpCode,
+                'dev_otp' => $devOtp,
                 'resend_seconds' => $resendSeconds,
             ]);
         }

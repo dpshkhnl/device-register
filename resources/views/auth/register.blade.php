@@ -44,7 +44,7 @@
                     Join the registry
                 </h2>
                 <p class="mt-4 text-base text-slate-400 max-w-xs leading-relaxed">
-                    Register your devices, transfer ownership, and download official certificates — all in one place.
+                    Register your devices, transfer ownership, and download certificates — all in one place.
                 </p>
 
                 {{-- Step progress --}}
@@ -78,7 +78,7 @@
             </div>
 
             <p class="text-xs text-slate-500">
-                Official Device Registry &amp; Management System
+                Device Registry &amp; Management System
             </p>
         </div>
     </div>
@@ -222,6 +222,9 @@
                             </div>
                             <p id="register-dev-otp-email" class="mt-2 text-xs text-amber-600 {{ session('dev_otp_register_email') ? '' : 'hidden' }}">Dev OTP (email): {{ session('dev_otp_register_email') }}</p>
                             <p id="register-dev-otp-phone" class="mt-2 text-xs text-amber-600 {{ session('dev_otp_register_phone') ? '' : 'hidden' }}">Dev OTP (phone): {{ session('dev_otp_register_phone') }}</p>
+                            @if (app()->environment('local'))
+                                <p class="mt-2 text-xs text-amber-600">Testing: default OTP <span class="font-mono font-semibold">123456</span> works for email and phone.</p>
+                            @endif
                         </div>
 
                         <button type="submit"

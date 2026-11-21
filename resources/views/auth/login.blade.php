@@ -12,7 +12,7 @@
     $authRequiresOtp     = (bool) session('auth_requires_otp');
     $devOtpEmail         = session('dev_otp_login_email');
     $devOtpPhone         = session('dev_otp_login_phone');
-    $showOtpPanel        = $authRequiresOtp && ($devOtpEmail || $devOtpPhone || $errors->has('otp') || old('otp'));
+    $showOtpPanel        = $authRequiresOtp && ($devOtpEmail || $devOtpPhone || session('otp_purpose') === 'auth_login' || $errors->has('otp') || old('otp'));
 @endphp
 
 <div class="min-h-[calc(100vh-4rem)] flex">
@@ -56,7 +56,7 @@
                     @foreach ([
                         'Real-time IMEI verification',
                         'Secure ownership transfers',
-                        'Official status certificates',
+                        'Status certificates',
                     ] as $feat)
                         <li class="flex items-center gap-3 text-sm text-slate-300">
                             <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border"
@@ -73,7 +73,7 @@
 
             {{-- Bottom tagline --}}
             <p class="text-xs text-slate-500">
-                Official Device Registry &amp; Management System
+                Device Registry &amp; Management System
             </p>
         </div>
     </div>

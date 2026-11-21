@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/verification', [DeviceController::class, 'verification'])->name('verification');
+Route::permanentRedirect('/imei', '/verification');
 Route::get('/packages', [PackageController::class, 'index'])->name('packages.index');
 
 Route::middleware('guest')->group(function () {

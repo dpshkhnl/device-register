@@ -141,15 +141,15 @@ class OtpController extends Controller
 
         if ($request->expectsJson()) {
             if (isset($emailOtp['otp'])) {
-                $request->session()->put('dev_otp_register_email', $emailOtp['otp']);
+                $request->session()->put('dev_otp_register_email', $this->devOtp($emailOtp['otp']));
             }
             if (isset($mobileOtp['otp'])) {
-                $request->session()->put('dev_otp_register_phone', $mobileOtp['otp']);
+                $request->session()->put('dev_otp_register_phone', $this->devOtp($mobileOtp['otp']));
             }
             return response()->json([
                 'status' => 'OTP sent successfully.',
-                'dev_otp_register_email' => $emailOtp['otp'] ?? null,
-                'dev_otp_register_phone' => $mobileOtp['otp'] ?? null,
+                'dev_otp_register_email' => $this->devOtp($emailOtp['otp'] ?? null),
+                'dev_otp_register_phone' => $this->devOtp($mobileOtp['otp'] ?? null),
                 'cooldown' => $cooldownSeconds,
                 'register_email' => $email !== '' ? $email : null,
                 'register_mobile' => $normalizedMobile,
@@ -160,8 +160,8 @@ class OtpController extends Controller
         return back()
             ->withInput()
             ->with('status', 'OTP sent successfully.')
-            ->with('dev_otp_register_email', $emailOtp['otp'] ?? null)
-            ->with('dev_otp_register_phone', $mobileOtp['otp'] ?? null)
+            ->with('dev_otp_register_email', $this->devOtp($emailOtp['otp'] ?? null))
+            ->with('dev_otp_register_phone', $this->devOtp($mobileOtp['otp'] ?? null))
             ->with('otp_purpose', 'auth_register')
             ->with('otp_sent_email', $email !== '')
             ->with('otp_sent_phone', (bool) $normalizedMobile)
@@ -325,15 +325,15 @@ class OtpController extends Controller
                 $notifier->sendSms($user->mobile, "Your login OTP is {$otp['otp']}. It expires in 10 minutes.");
             }
             if ($request->expectsJson()) {
-                $request->session()->put('dev_otp_login_email', $otp['otp']);
+                $request->session()->put('dev_otp_login_email', $this->devOtp($otp['otp']));
                 return response()->json([
                     'status' => 'OTP sent to your email.',
                     'channel' => 'email',
-                    'dev_otp_login_email' => $otp['otp'],
+                    'dev_otp_login_email' => $this->devOtp($otp['otp']),
                     'resend_seconds' => $otp['resend_seconds'] ?? null,
                 ]);
             }
-            return back()->withInput()->with('dev_otp_login_email', $otp['otp']);
+            return back()->withInput()->with('dev_otp_login_email', $this->devOtp($otp['otp']))->with('otp_purpose', 'auth_login');
         }
 
         $otp = $this->sendOtp($login, 'auth_login_phone', $request, $notifier);
@@ -351,15 +351,20 @@ class OtpController extends Controller
             $notifier->sendEmail($user->email, 'Your OTP code', "Your login OTP is {$otp['otp']}. It expires in 10 minutes.");
         }
         if ($request->expectsJson()) {
-            $request->session()->put('dev_otp_login_phone', $otp['otp']);
+            $request->session()->put('dev_otp_login_phone', $this->devOtp($otp['otp']));
             return response()->json([
                 'status' => 'OTP sent to your phone.',
                 'channel' => 'phone',
-                'dev_otp_login_phone' => $otp['otp'],
+                'dev_otp_login_phone' => $this->devOtp($otp['otp']),
                 'resend_seconds' => $otp['resend_seconds'] ?? null,
             ]);
         }
-        return back()->withInput()->with('dev_otp_login_phone', $otp['otp']);
+        return back()->withInput()->with('dev_otp_login_phone', $this->devOtp($otp['otp']))->with('otp_purpose', 'auth_login');
+    }
+
+    private function devOtp(?string $otp): ?string
+    {
+        return app()->environment('local') ? $otp : null;
     }
 
     private function sendOtp(string $recipient, string $purpose, Request $request, NotificationService $notifier): array

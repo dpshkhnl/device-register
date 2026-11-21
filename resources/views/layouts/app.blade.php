@@ -62,5 +62,6 @@
                 });
             });
         </script>
+        @include('partials.image-preview')
     </body>
 </html>
