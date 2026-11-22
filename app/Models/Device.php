@@ -7,6 +7,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Device extends Model
 {
+    protected static function booted(): void
+    {
+        // Keep cached IMEI check results in step with the registry.
+        $forget = fn (Device $device) => \App\Services\ImeiLookup::forgetDevice($device);
+        static::saved($forget);
+        static::deleted($forget);
+        static::restored($forget);
+    }
+
     use SoftDeletes;
 
     protected $fillable = [

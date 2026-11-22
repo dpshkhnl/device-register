@@ -7,6 +7,8 @@ use App\Models\DeviceAgeOption;
 use App\Models\DeviceModel;
 use App\Models\ImeiCheck;
 use App\Models\Product;
+use App\Models\UserPackage;
+use App\Services\ImeiLookup;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -135,47 +137,51 @@ class DeviceController extends Controller
         return view('pages.device-show', compact('device'));
     }
 
-    public function verification(Request $request)
+    public function verification(Request $request, ImeiLookup $lookup)
     {
         $imei = $request->input('imei');
         $device = null;
         $result = null;
+        $remainingChecks = null;
 
         if ($imei !== null && $imei !== '') {
             $request->validate([
                 'imei' => ['required', 'string', 'max:50'],
             ]);
+            $imei = ImeiLookup::normalize($imei);
 
-            if ($request->user()) {
-                $userPackage = $request->user()->activePackage()->first();
+            if ($user = $request->user()) {
+                $userPackage = $user->activePackage()->first();
                 if (! $userPackage) {
                     return back()->withErrors(['imei' => 'You need an active package to verify IMEI.'])->withInput();
                 }
 
-                if ($userPackage->remainingImeiChecks() <= 0) {
+                // Check-and-consume in one statement so concurrent requests can't overspend the plan.
+                $consumed = UserPackage::whereKey($userPackage->id)
+                    ->whereColumn('used_imei_count', '<', 'imei_limit')
+                    ->increment('used_imei_count');
+                if (! $consumed) {
                     return back()->withErrors(['imei' => 'Your IMEI verification limit has been reached.'])->withInput();
                 }
+                $remainingChecks = max(0, $userPackage->remainingImeiChecks() - 1);
             }
 
-            $device = Device::with('currentOwner')
-                ->where('imei', $imei)
-                ->orWhere('imei2', $imei)
-                ->first();
+            $device = $lookup->find($imei);
             $result = $device ? 'found' : 'not_found';
 
-            ImeiCheck::create([
+            // The audit log doesn't affect the answer, so write it after the response is sent.
+            $log = [
                 'imei' => $imei,
                 'checked_by_user_id' => $request->user()?->id,
                 'channel' => 'portal',
                 'result' => $result,
                 'status_returned' => $device?->status,
-            ]);
-
-            if ($request->user()) {
-                $request->user()->activePackage()->first()?->increment('used_imei_count');
-            }
+            ];
+            dispatch(fn () => ImeiCheck::create($log))->afterResponse();
+        } elseif ($user = $request->user()) {
+            $remainingChecks = $user->activePackage()->first()?->remainingImeiChecks();
         }
 
-        return view('pages.verification', compact('imei', 'device', 'result'));
+        return view('pages.verification', compact('imei', 'device', 'result', 'remainingChecks'));
     }
 }

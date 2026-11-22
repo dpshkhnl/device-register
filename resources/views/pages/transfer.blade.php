@@ -1,344 +1,241 @@
 @extends('layouts.app')
 
+@section('title', 'Transfer ownership')
+
 @section('content')
-<section class="relative overflow-hidden bg-background py-12 lg:py-16">
-    <div class="pointer-events-none absolute inset-0 hidden opacity-25 lg:block"
-        style="background-image: url('/images/hero-device.svg'); background-repeat: no-repeat; background-position: left 6% top 12%; background-size: 220px;">
+@php
+    $blockedIds = array_merge($pendingDeviceIds ?? [], $lostDeviceIds ?? []);
+    $requestedImei = request('device');
+    if ($requestedImei && ! $devices->contains(fn ($d) => $d->imei === $requestedImei && ! in_array($d->id, $blockedIds, true))) {
+        $requestedImei = null;
+    }
+    $selectedImei = old('device_imei', session('otp_device', $requestedImei));
+    $selectedDevice = $devices->firstWhere('imei', $selectedImei);
+    $newOtpVerified = session('transfer.new_verified');
+    $oldOtpVerified = session('transfer.old_verified');
+    $sentRecipient = session('otp_sent_recipient');
+    $sentSeconds = (int) session('otp_resend_seconds', 0);
+    $cooldownSeconds = (int) session('otp_cooldown', 0);
+    $remainingSeconds = $cooldownSeconds > 0 ? $cooldownSeconds : $sentSeconds;
+    $newOtpRemaining = $sentRecipient === 'new' ? $remainingSeconds : 0;
+    $oldOtpRemaining = $sentRecipient === 'old' ? $remainingSeconds : 0;
+    $step1Done = ! empty($selectedImei);
+    $step2Done = (bool) $newOtpVerified;
+    $step3Done = (bool) $oldOtpVerified;
+    $activeStep = $step1Done ? ($step2Done ? ($step3Done ? 4 : 3) : 2) : 1;
+    if ($errors->has('device_imei')) {
+        $activeStep = 1;
+    } elseif ($errors->has('to_mobile') || $errors->has('new_owner_otp')) {
+        $activeStep = 2;
+    } elseif ($errors->has('old_owner_otp')) {
+        $activeStep = 3;
+    }
+    if ($sentRecipient === 'new') {
+        $activeStep = 2;
+    } elseif ($sentRecipient === 'old') {
+        $activeStep = 3;
+    }
+    $myMobile = auth()->user()?->mobile;
+    $steps = ['Choose device', 'New owner', 'Your code', 'Confirm'];
+@endphp
+
+<div class="container max-w-3xl py-10 lg:py-12">
+    <a href="{{ route('dashboard') }}" class="btn btn-ghost btn-sm -ml-3 mb-4">
+        <x-site.icon name="arrow-left" class="h-4 w-4" /> Dashboard
+    </a>
+    <div class="mb-8">
+        <p class="eyebrow">Ownership transfer</p>
+        <h1 class="page-title mt-2">Transfer a device</h1>
+        <p class="page-lead">Selling or giving your phone away? Move it to the new owner’s name. Both of you confirm with a one-time code sent by SMS.</p>
     </div>
-    <div class="container max-w-5xl">
-        <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6" />
-                </svg>
-                Back to Dashboard
-            </a>
-            <div class="rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold text-muted-foreground">Ownership Flow</div>
+
+    @if ($devices->isEmpty())
+        <div class="surface px-6 py-14 text-center">
+            <span class="icon-tile mx-auto h-14 w-14 rounded-2xl bg-accent text-accent-foreground"><x-site.icon name="phone" class="h-6 w-6" /></span>
+            <h2 class="mt-4 text-base font-bold text-foreground">You have no devices to transfer</h2>
+            <p class="mx-auto mt-1 max-w-xs text-sm text-muted-foreground">Register a device first, then you can transfer it to someone else.</p>
+            <a href="{{ route('register-device') }}" class="btn btn-primary mt-5"><x-site.icon name="plus" class="h-4 w-4" stroke="2.2" /> Register a device</a>
         </div>
+    @else
+    <form method="POST" action="{{ route('transfer.store') }}" class="surface overflow-hidden" data-transfer-steps data-initial-step="{{ $activeStep }}"
+          data-swal-confirm data-swal-danger="true" data-swal-title="Transfer this device?" data-swal-text="Ownership moves to the new owner. This cannot be undone." data-swal-confirm="Yes, transfer">
+        @csrf
 
-        @php
-            $selectedImei = old('device_imei', session('otp_device'));
-            $selectedDevice = $devices->firstWhere('imei', $selectedImei);
-            $newOtpVerified = session('transfer.new_verified');
-            $oldOtpVerified = session('transfer.old_verified');
-            $transferConfirmed = session('transfer_confirmed');
-            $resendSeconds = (int) ($settings?->otp_resend_seconds ?? 60);
-            if ($resendSeconds < 10) {
-                $resendSeconds = 10;
-            } elseif ($resendSeconds > 600) {
-                $resendSeconds = 600;
-            }
-            $sentRecipient = session('otp_sent_recipient');
-            $sentSeconds = (int) session('otp_resend_seconds', 0);
-            $cooldownSeconds = (int) session('otp_cooldown', 0);
-            $remainingSeconds = $cooldownSeconds > 0 ? $cooldownSeconds : $sentSeconds;
-            $newOtpRemaining = $sentRecipient === 'new' ? $remainingSeconds : 0;
-            $oldOtpRemaining = $sentRecipient === 'old' ? $remainingSeconds : 0;
-            $step1Done = ! empty($selectedImei);
-            $step2Done = (bool) $newOtpVerified;
-            $step3Done = (bool) $oldOtpVerified;
-            $step4Done = (bool) $transferConfirmed;
-            $activeStep = $step1Done ? ($step2Done ? ($step3Done ? 4 : 3) : 2) : 1;
-            if ($errors->has('device_imei')) {
-                $activeStep = 1;
-            } elseif ($errors->has('to_mobile') || $errors->has('new_owner_otp')) {
-                $activeStep = 2;
-            } elseif ($errors->has('old_owner_otp')) {
-                $activeStep = 3;
-            }
-            if (session('otp_sent_recipient') === 'new') {
-                $activeStep = 2;
-            } elseif (session('otp_sent_recipient') === 'old') {
-                $activeStep = 3;
-            }
-            $steps = [
-                ['label' => 'Select Device', 'icon' => 'device', 'done' => $step1Done],
-                ['label' => 'New Owner', 'icon' => 'user', 'done' => $step2Done],
-                ['label' => 'Verify OTP', 'icon' => 'shield', 'done' => $step3Done],
-                ['label' => 'Confirm', 'icon' => 'check', 'done' => $step4Done],
-            ];
-        @endphp
+        {{-- Stepper --}}
+        <ol class="flex items-center gap-2 border-b border-border bg-muted/40 px-6 py-5 sm:px-8">
+            @foreach ($steps as $i => $label)
+                <li class="flex flex-1 items-center gap-2 last:flex-none">
+                    <span class="step-dot" data-step-dot="{{ $i + 1 }}" data-state="{{ $i + 1 < $activeStep ? 'done' : ($i + 1 === $activeStep ? 'active' : 'idle') }}">
+                        <span data-num>{{ $i + 1 }}</span>
+                        <x-site.icon name="check" class="hidden h-4 w-4" stroke="2.6" data-tick />
+                    </span>
+                    <span class="hidden text-xs font-semibold text-muted-foreground sm:inline" data-step-label="{{ $i + 1 }}">{{ $label }}</span>
+                    @if (! $loop->last)<span class="mx-1 h-px flex-1 bg-border"></span>@endif
+                </li>
+            @endforeach
+        </ol>
 
-        <div class="mb-8 rounded-3xl border border-border bg-card px-6 py-5 shadow-soft">
-            <div class="grid gap-4 sm:grid-cols-4">
-                @foreach ($steps as $index => $step)
-                    @php
-                        $stepIndex = $index + 1;
-                        $isActive = $activeStep === $stepIndex;
-                        $isDone = $step['done'];
-                    @endphp
-                    <div class="flex flex-col items-center text-center">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-full border {{ $isDone ? 'border-emerald-500 bg-emerald-500 text-white' : ($isActive ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted text-muted-foreground') }}">
-                            @if ($step['icon'] === 'device')
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                                    <rect x="7" y="2" width="10" height="20" rx="2"></rect>
-                                    <path d="M11 18h2" stroke-linecap="round" />
-                                </svg>
-                            @elseif ($step['icon'] === 'user')
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                                    <circle cx="12" cy="8" r="4" />
-                                    <path d="M4 20c1.8-4 13.2-4 16 0" stroke-linecap="round" />
-                                </svg>
-                            @elseif ($step['icon'] === 'shield')
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                                    <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
-                                    <path d="M9.5 12.5l2 2 3-3" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            @else
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                                    <circle cx="12" cy="12" r="9" />
-                                    <path d="M8 12l2.5 2.5L16 9" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            @endif
-                        </div>
-                        <p class="mt-2 text-xs font-semibold {{ $isActive ? 'text-foreground' : 'text-muted-foreground' }}">{{ $step['label'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
+        <div class="p-6 sm:p-8">
+            <div class="callout callout-success mb-6 hidden" data-status role="status"></div>
 
-        <div class="rounded-3xl border border-border bg-card p-6 shadow-soft sm:p-10">
-            <div class="space-y-2">
-                <h2 class="text-2xl font-semibold text-foreground">Ownership transfer</h2>
-                <p class="text-xs text-muted-foreground">Complete each step to transfer your device securely.</p>
-            </div>
+            {{-- Step 1 --}}
+            <div class="{{ $activeStep === 1 ? '' : 'hidden' }}" data-step="1">
+                <h2 class="text-lg font-bold text-foreground">Which device are you transferring?</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Devices that are lost or already being transferred can’t be selected.</p>
 
-            @if (session('status'))
-                <div class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    {{ session('status') }}
-                </div>
-            @endif
-            <form method="POST" action="{{ route('transfer.store') }}" class="mt-6 space-y-6" data-transfer-steps data-initial-step="{{ $activeStep }}" data-swal-confirm data-swal-title="Transfer this device?" data-swal-text="Ownership moves to the new owner immediately. This cannot be undone." data-swal-confirm="Yes, transfer">
-                @csrf
-                <div class="hidden rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700" data-status></div>
-                <div class="rounded-2xl border border-border bg-muted/20 p-4 {{ $activeStep === 1 ? '' : 'hidden' }}" data-step="1">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Step 1</p>
-                    <h3 class="mt-2 text-sm font-semibold text-foreground">Select device</h3>
-                    <p class="mt-1 text-xs text-muted-foreground">Choose the device you want to transfer.</p>
-
-                    <div class="mt-4 space-y-3">
-                        @forelse ($devices as $device)
-                            @php
-                                $maskedImei = substr($device->imei, 0, 4).'****'.substr($device->imei, -4);
-                                $isPending = in_array($device->id, $pendingDeviceIds ?? [], true);
-                                $isLost = in_array($device->id, $lostDeviceIds ?? [], true);
-                            @endphp
-                            <label class="flex cursor-pointer items-center gap-4 rounded-2xl border border-border bg-background px-4 py-4 transition hover:border-primary/40 {{ ($isPending || $isLost) ? 'opacity-60 cursor-not-allowed' : '' }}">
-                                <input type="radio" name="device_imei" value="{{ $device->imei }}" class="peer sr-only" {{ $selectedImei === $device->imei ? 'checked' : '' }} {{ ($isPending || $isLost) ? 'disabled' : '' }} />
-                                <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground peer-checked:bg-primary/10 peer-checked:text-primary">
-                                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                                        <rect x="7" y="2" width="10" height="20" rx="2"></rect>
-                                        <path d="M11 18h2" stroke-linecap="round" />
-                                    </svg>
-                                </span>
-                                <span class="flex-1">
-                                    <span class="block text-sm font-semibold text-foreground">{{ $device->brand }} {{ $device->model }}</span>
-                                    <span class="block text-xs text-muted-foreground">IMEI: {{ $maskedImei }}</span>
-                                    @if ($isPending)
-                                        <span class="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Pending transfer</span>
-                                    @endif
-                                    @if ($isLost)
-                                        <span class="mt-1 inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">Marked lost</span>
-                                    @endif
-                                </span>
-                                <span class="flex h-6 w-6 items-center justify-center rounded-full border border-border text-transparent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white">
-                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                </span>
-                            </label>
-                        @empty
-                            <div class="rounded-2xl border border-dashed border-border bg-background px-4 py-5 text-xs text-muted-foreground">
-                                No registered devices found for your account.
-                            </div>
-                        @endforelse
-                    </div>
-
-                    @error('device_imei')
-                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-
-                    <p class="mt-2 text-xs text-rose-600 hidden" data-step1-warning>Please select a device to continue.</p>
-
-                    <div class="mt-4 flex items-center justify-end">
-                        <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-xs font-semibold text-primary-foreground shadow-soft hover:bg-primary/90" data-step-next="2" data-step1-next data-require-selection="true">
-                            Continue
-                        </button>
-                    </div>
-                </div>
-
-                <div class="rounded-2xl border border-border bg-muted/20 p-4 {{ $activeStep === 2 ? '' : 'hidden' }}" data-step="2">
-                    @if (session('status'))
-                        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-                    <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Step 2</p>
-                    <h3 class="mt-2 text-sm font-semibold text-foreground">New owner OTP</h3>
-                    <p class="mt-1 text-xs text-muted-foreground">Enter the new owner's mobile number and send OTP.</p>
-                    <input
-                        type="text"
-                        name="to_mobile"
-                        value="{{ old('to_mobile') }}"
-                        placeholder="Enter mobile number"
-                        class="mt-4 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm"
-                    />
-                    <input
-                        type="text"
-                        name="new_owner_otp"
-                        value="{{ old('new_owner_otp') }}"
-                        placeholder="Enter new owner OTP"
-                        class="mt-3 h-12 w-full rounded-xl border border-border bg-background px-4 text-sm"
-                        inputmode="numeric"
-                    />
-                    <div class="mt-3 flex flex-wrap items-center gap-3">
-                        <button
-                            type="button"
-                            name="recipient"
-                            value="new"
-                            formaction="{{ route('transfer.otp') }}"
-                            formmethod="POST"
-                            class="inline-flex h-11 items-center justify-center rounded-xl border border-border px-4 text-xs font-semibold text-foreground"
-                            data-resend-label="new"
-                            data-resend-remaining="{{ $newOtpRemaining }}"
-                            data-ajax-action="send"
-                            data-recipient="new"
-                            {{ $devices->isEmpty() || $newOtpRemaining > 0 ? 'disabled' : '' }}
-                        >
-                            Send OTP to New Owner
-                        </button>
-                        <button type="button" class="inline-flex h-11 items-center justify-center rounded-xl border border-border px-4 text-xs font-semibold text-foreground" data-step-prev="1">
-                            Back
-                        </button>
-                        <button
-                            type="button"
-                            formaction="{{ route('transfer.verify.new') }}"
-                            formmethod="POST"
-                            class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
-                            data-ajax-action="verify"
-                            data-recipient="new"
-                        >
-                            Continue
-                        </button>
-                    </div>
-                    <p class="mt-2 text-xs text-rose-600 {{ $newOtpRemaining > 0 ? '' : 'hidden' }}" data-resend-timer="new">
-                        Resend available in {{ $newOtpRemaining }}s
-                    </p>
-                    @if (session('dev_otp_new') || session('otp_hint'))
-                        <p class="mt-2 text-xs text-amber-600">Dev OTP (new owner): {{ session('dev_otp_new') ?? session('otp_hint') }}</p>
-                    @endif
-                    <p class="mt-2 hidden text-xs text-amber-600" data-dev-otp="new"></p>
-                    @error('to_mobile')
-                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-                    @error('new_owner_otp')
-                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-                    <p class="mt-2 hidden text-xs text-rose-600" data-error="to_mobile"></p>
-                    <p class="mt-2 hidden text-xs text-rose-600" data-error="new_owner_otp"></p>
-                </div>
-
-                <div class="rounded-2xl border border-border bg-muted/20 p-4 {{ $activeStep === 3 ? '' : 'hidden' }}" data-step="3">
-                    @if (session('status'))
-                        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-                    <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Step 3</p>
-                    <h3 class="mt-2 text-sm font-semibold text-foreground">Old owner OTP</h3>
-                    <p class="mt-1 text-xs text-muted-foreground">We will send an OTP to your number ({{ auth()->user()?->mobile ?? 'mobile not set' }}).</p>
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        <input
-                            type="text"
-                            name="old_owner_otp"
-                            value="{{ old('old_owner_otp') }}"
-                            placeholder="Enter old owner OTP"
-                            class="h-12 flex-1 rounded-xl border border-border bg-background px-4 text-sm"
-                            inputmode="numeric"
-                        />
-                        <button
-                            type="button"
-                            name="recipient"
-                            value="old"
-                            formaction="{{ route('transfer.otp') }}"
-                            formmethod="POST"
-                            class="inline-flex h-12 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground"
-                            data-resend-label="old"
-                            data-resend-remaining="{{ $oldOtpRemaining }}"
-                            data-ajax-action="send"
-                            data-recipient="old"
-                            {{ $devices->isEmpty() || $oldOtpRemaining > 0 ? 'disabled' : '' }}
-                        >
-                            Send OTP to Old Owner
-                        </button>
-                        <button type="button" class="inline-flex h-12 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground" data-step-prev="2">
-                            Back
-                        </button>
-                        <button
-                            type="button"
-                            formaction="{{ route('transfer.verify.old') }}"
-                            formmethod="POST"
-                            class="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90"
-                            data-ajax-action="verify"
-                            data-recipient="old"
-                        >
-                            Continue
-                        </button>
-                    </div>
-                    <p class="mt-2 text-xs text-rose-600 {{ $oldOtpRemaining > 0 ? '' : 'hidden' }}" data-resend-timer="old">
-                        Resend available in {{ $oldOtpRemaining }}s
-                    </p>
-                    @if (session('dev_otp_old'))
-                        <p class="mt-2 text-xs text-amber-600">Dev OTP (old owner): {{ session('dev_otp_old') }}</p>
-                    @endif
-                    <p class="mt-2 hidden text-xs text-amber-600" data-dev-otp="old"></p>
-                    @error('old_owner_otp')
-                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-                    <p class="mt-2 hidden text-xs text-rose-600" data-error="old_owner_otp"></p>
-                </div>
-
-                <div class="rounded-2xl border border-border bg-card p-4 {{ $activeStep === 4 ? '' : 'hidden' }}" data-step="4">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Step 4</p>
-                    <h3 class="mt-2 text-sm font-semibold text-foreground">Confirm transfer</h3>
-                    <p class="mt-1 text-xs text-muted-foreground">Review the details before submitting.</p>
-                    <div class="mt-4 space-y-2 text-xs text-muted-foreground">
-                        <div class="flex items-center justify-between">
-                            <span>Device</span>
-                            <span class="font-semibold text-foreground">
-                                {{ $selectedDevice ? $selectedDevice->brand.' '.$selectedDevice->model : 'Not selected' }}
+                <div class="mt-5 space-y-3">
+                    @foreach ($devices as $device)
+                        @php
+                            $isPending = in_array($device->id, $pendingDeviceIds ?? [], true);
+                            $isLost = in_array($device->id, $lostDeviceIds ?? [], true);
+                        @endphp
+                        <label class="choice">
+                            <input type="radio" name="device_imei" value="{{ $device->imei }}" class="sr-only"
+                                   data-name="{{ $device->brand }} {{ $device->model }}"
+                                   @checked($selectedImei === $device->imei) @disabled($isPending || $isLost) />
+                            <span class="icon-tile bg-muted text-foreground/70"><x-site.icon name="phone" /></span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-sm font-semibold text-foreground">{{ $device->brand }} {{ $device->model }}</span>
+                                <span class="block font-mono text-xs text-muted-foreground">IMEI {{ substr($device->imei, 0, 4) }}•••{{ substr($device->imei, -4) }}</span>
                             </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>IMEI</span>
-                            <span class="font-semibold text-foreground">{{ $selectedImei ?: 'Not selected' }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>New owner</span>
-                            <span class="font-semibold text-foreground">{{ old('to_mobile') ?: 'Not provided' }}</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span>Old owner</span>
-                            <span class="font-semibold text-foreground">{{ auth()->user()?->mobile ?? 'Not set' }}</span>
-                        </div>
-                    </div>
-                    @error('new_owner_otp')
-                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
+                            @if ($isPending)
+                                <x-site.status status="pending" />
+                            @elseif ($isLost)
+                                <x-site.status status="lost" />
+                            @else
+                                <span class="choice-dot"><x-site.icon name="check" class="h-3 w-3" stroke="3" /></span>
+                            @endif
+                        </label>
+                    @endforeach
+                </div>
+                @error('device_imei') <p class="field-error">{{ $message }}</p> @enderror
+                <p class="field-error hidden" data-step1-warning>Please choose a device to continue.</p>
 
-                    <div class="mt-4 flex flex-wrap items-center gap-3">
-                        <button type="submit" class="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90" {{ $devices->isEmpty() ? 'disabled' : '' }}>
-                            Transfer Device
-                        </button>
-                        <button type="button" class="inline-flex h-12 items-center justify-center rounded-xl border border-border px-4 text-sm font-semibold text-foreground" data-step-prev="3">
-                            Back
-                        </button>
+                <div class="mt-8 flex justify-end">
+                    <button type="button" class="btn btn-primary" data-step-next="2" data-step1-next data-require-selection="true">
+                        Continue <x-site.icon name="arrow-right" class="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            {{-- Step 2 --}}
+            <div class="{{ $activeStep === 2 ? '' : 'hidden' }}" data-step="2">
+                <h2 class="text-lg font-bold text-foreground">Who is the new owner?</h2>
+                <p class="mt-1 text-sm text-muted-foreground">We’ll text a 6-digit code to their phone. Ask them to read it to you.</p>
+
+                <div class="mt-6 space-y-5">
+                    <div>
+                        <label class="field-label" for="to_mobile">New owner’s mobile number</label>
+                        <div class="flex flex-col gap-2 sm:flex-row">
+                            <input id="to_mobile" type="tel" name="to_mobile" value="{{ old('to_mobile') }}" placeholder="98XXXXXXXX" inputmode="tel" autocomplete="off" class="field-input flex-1" />
+                            <button type="button" name="recipient" value="new" formaction="{{ route('transfer.otp') }}" formmethod="POST"
+                                    class="btn btn-secondary h-12" data-resend-label="new" data-resend-remaining="{{ $newOtpRemaining }}" data-ajax-action="send" data-recipient="new"
+                                    @disabled($newOtpRemaining > 0)>
+                                <x-site.icon name="mail" class="h-4 w-4" /> Send code
+                            </button>
+                        </div>
+                        <p class="field-help {{ $newOtpRemaining > 0 ? '' : 'hidden' }}" data-resend-timer="new">You can resend in {{ $newOtpRemaining }}s</p>
+                        @error('to_mobile') <p class="field-error">{{ $message }}</p> @enderror
+                        <p class="field-error hidden" data-error="to_mobile"></p>
+                    </div>
+                    <div>
+                        <label class="field-label" for="new_owner_otp">Code from the new owner</label>
+                        <input id="new_owner_otp" type="text" name="new_owner_otp" value="{{ old('new_owner_otp') }}" placeholder="••••••" inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="field-input otp-input max-w-xs" />
+                        @if (session('dev_otp_new') || session('otp_hint'))
+                            <p class="field-help text-amber-600">Dev OTP (new owner): {{ session('dev_otp_new') ?? session('otp_hint') }}</p>
+                        @endif
+                        <p class="field-help hidden text-amber-600" data-dev-otp="new"></p>
+                        @error('new_owner_otp') <p class="field-error">{{ $message }}</p> @enderror
+                        <p class="field-error hidden" data-error="new_owner_otp"></p>
                     </div>
                 </div>
-            </form>
+
+                <div class="mt-8 flex justify-between gap-3">
+                    <button type="button" class="btn btn-ghost" data-step-prev="1"><x-site.icon name="arrow-left" class="h-4 w-4" /> Back</button>
+                    <button type="button" formaction="{{ route('transfer.verify.new') }}" formmethod="POST" class="btn btn-primary" data-ajax-action="verify" data-recipient="new">
+                        Verify & continue <x-site.icon name="arrow-right" class="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            {{-- Step 3 --}}
+            <div class="{{ $activeStep === 3 ? '' : 'hidden' }}" data-step="3">
+                <h2 class="text-lg font-bold text-foreground">Confirm it’s you</h2>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    @if ($myMobile)
+                        We’ll text a code to your number, <span class="font-semibold text-foreground">{{ $myMobile }}</span>.
+                    @else
+                        Your account has no mobile number, so we can’t send you a code. Please contact support to add one.
+                    @endif
+                </p>
+
+                <div class="mt-6">
+                    <label class="field-label" for="old_owner_otp">Your code</label>
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <input id="old_owner_otp" type="text" name="old_owner_otp" value="{{ old('old_owner_otp') }}" placeholder="••••••" inputmode="numeric" maxlength="6" autocomplete="one-time-code" class="field-input otp-input sm:max-w-xs" />
+                        <button type="button" name="recipient" value="old" formaction="{{ route('transfer.otp') }}" formmethod="POST"
+                                class="btn btn-secondary h-12" data-resend-label="old" data-resend-remaining="{{ $oldOtpRemaining }}" data-ajax-action="send" data-recipient="old"
+                                @disabled($oldOtpRemaining > 0)>
+                            <x-site.icon name="mail" class="h-4 w-4" /> Send my code
+                        </button>
+                    </div>
+                    <p class="field-help {{ $oldOtpRemaining > 0 ? '' : 'hidden' }}" data-resend-timer="old">You can resend in {{ $oldOtpRemaining }}s</p>
+                    @if (session('dev_otp_old'))
+                        <p class="field-help text-amber-600">Dev OTP (old owner): {{ session('dev_otp_old') }}</p>
+                    @endif
+                    <p class="field-help hidden text-amber-600" data-dev-otp="old"></p>
+                    @error('old_owner_otp') <p class="field-error">{{ $message }}</p> @enderror
+                    <p class="field-error hidden" data-error="old_owner_otp"></p>
+                </div>
+
+                <div class="mt-8 flex justify-between gap-3">
+                    <button type="button" class="btn btn-ghost" data-step-prev="2"><x-site.icon name="arrow-left" class="h-4 w-4" /> Back</button>
+                    <button type="button" formaction="{{ route('transfer.verify.old') }}" formmethod="POST" class="btn btn-primary" data-ajax-action="verify" data-recipient="old">
+                        Verify & continue <x-site.icon name="arrow-right" class="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            {{-- Step 4 --}}
+            <div class="{{ $activeStep === 4 ? '' : 'hidden' }}" data-step="4">
+                <h2 class="text-lg font-bold text-foreground">Review and transfer</h2>
+                <p class="mt-1 text-sm text-muted-foreground">Both codes are verified. Check the details, then confirm.</p>
+
+                <dl class="mt-6 divide-y divide-border rounded-2xl border border-border">
+                    <div class="flex items-center justify-between gap-4 px-5 py-4">
+                        <dt class="text-sm text-muted-foreground">Device</dt>
+                        <dd class="text-right text-sm font-semibold text-foreground" data-summary="device">{{ $selectedDevice ? $selectedDevice->brand.' '.$selectedDevice->model : 'Not selected' }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 px-5 py-4">
+                        <dt class="text-sm text-muted-foreground">IMEI</dt>
+                        <dd class="font-mono text-sm font-semibold text-foreground" data-summary="imei">{{ $selectedImei ?: 'Not selected' }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 px-5 py-4">
+                        <dt class="text-sm text-muted-foreground">From (you)</dt>
+                        <dd class="text-sm font-semibold text-foreground">{{ $myMobile ?? 'Not set' }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 bg-accent/50 px-5 py-4">
+                        <dt class="text-sm text-muted-foreground">To (new owner)</dt>
+                        <dd class="text-sm font-semibold text-foreground" data-summary="to">{{ old('to_mobile') ?: 'Not provided' }}</dd>
+                    </div>
+                </dl>
+                <p class="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+                    <x-site.icon name="info" class="h-4 w-4 shrink-0" />
+                    If the new owner already has an account, the device moves to them right away. Otherwise it completes automatically when they sign up with this number.
+                </p>
+                @error('new_owner_otp') <p class="field-error">{{ $message }}</p> @enderror
+
+                <div class="mt-8 flex justify-between gap-3">
+                    <button type="button" class="btn btn-ghost" data-step-prev="3"><x-site.icon name="arrow-left" class="h-4 w-4" /> Back</button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <x-site.icon name="transfer" class="h-5 w-5" /> Transfer device
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
+    </form>
+    @endif
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -355,31 +252,43 @@
         const errorFields = ['to_mobile', 'new_owner_otp', 'old_owner_otp', 'device_imei'];
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-        const showStep = (step) => {
-            panels.forEach((panel) => {
-                const panelStep = parseInt(panel.dataset.step || '0', 10);
-                panel.classList.toggle('hidden', panelStep !== step);
-            });
+        const setStatus = (message, isError = false) => {
+            if (!statusBox) return;
+            statusBox.textContent = message || '';
+            statusBox.classList.toggle('hidden', !message);
+            statusBox.classList.toggle('callout-success', !isError);
+            statusBox.classList.toggle('callout-danger', isError);
         };
 
-        const setStatus = (message) => {
-            if (!statusBox) return;
-            if (!message) {
-                statusBox.classList.add('hidden');
-                statusBox.textContent = '';
-                return;
-            }
-            statusBox.textContent = message;
-            statusBox.classList.remove('hidden');
+        const fillSummary = () => {
+            const selected = container.querySelector('input[name="device_imei"]:checked');
+            const mobile = container.querySelector('input[name="to_mobile"]')?.value.trim();
+            const set = (key, value) => { const el = container.querySelector(`[data-summary="${key}"]`); if (el) el.textContent = value; };
+            set('device', selected?.dataset.name || 'Not selected');
+            set('imei', selected?.value || 'Not selected');
+            set('to', mobile || 'Not provided');
+        };
+
+        const showStep = (step) => {
+            panels.forEach((panel) => panel.classList.toggle('hidden', parseInt(panel.dataset.step, 10) !== step));
+            container.querySelectorAll('[data-step-dot]').forEach((dot) => {
+                const n = parseInt(dot.dataset.stepDot, 10);
+                const state = n < step ? 'done' : (n === step ? 'active' : 'idle');
+                dot.dataset.state = state;
+                dot.querySelector('[data-num]')?.classList.toggle('hidden', state === 'done');
+                dot.querySelector('[data-tick]')?.classList.toggle('hidden', state !== 'done');
+            });
+            container.querySelectorAll('[data-step-label]').forEach((label) => {
+                label.classList.toggle('text-foreground', parseInt(label.dataset.stepLabel, 10) === step);
+            });
+            if (step === 4) fillSummary();
+            panels.find((p) => parseInt(p.dataset.step, 10) === step)?.querySelector('input:not([type=radio]):not([type=hidden])')?.focus({ preventScroll: true });
         };
 
         const clearErrors = () => {
             errorFields.forEach((field) => {
                 const el = container.querySelector(`[data-error="${field}"]`);
-                if (el) {
-                    el.textContent = '';
-                    el.classList.add('hidden');
-                }
+                if (el) { el.textContent = ''; el.classList.add('hidden'); }
             });
         };
 
@@ -388,8 +297,7 @@
             Object.entries(errors).forEach(([field, messages]) => {
                 const el = container.querySelector(`[data-error="${field}"]`);
                 if (!el) return;
-                const message = Array.isArray(messages) ? messages[0] : messages;
-                el.textContent = message;
+                el.textContent = Array.isArray(messages) ? messages[0] : messages;
                 el.classList.remove('hidden');
             });
         };
@@ -398,7 +306,6 @@
             const button = container.querySelector(`[data-resend-label="${recipient}"]`);
             const label = container.querySelector(`[data-resend-timer="${recipient}"]`);
             if (!button || !label || !seconds || seconds <= 0) return;
-
             let remaining = seconds;
             const tick = () => {
                 if (remaining <= 0) {
@@ -408,86 +315,90 @@
                 }
                 button.disabled = true;
                 label.classList.remove('hidden');
-                label.textContent = `Resend available in ${remaining}s`;
+                label.textContent = `You can resend in ${remaining}s`;
                 remaining -= 1;
                 setTimeout(tick, 1000);
             };
             tick();
         };
 
-        const initialStep = parseInt(container.dataset.initialStep || '1', 10);
-        showStep(initialStep);
+        showStep(parseInt(container.dataset.initialStep || '1', 10));
+
+        // Enter should advance the visible step, not submit the whole transfer.
+        container.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' || event.target.tagName !== 'INPUT') return;
+            const panel = panels.find((p) => !p.classList.contains('hidden'));
+            if (!panel || panel.dataset.step === '4') return;
+            event.preventDefault();
+            panel.querySelector('.btn-primary')?.click();
+        });
 
         const toggleNextState = () => {
-            if (!nextBtn) return;
-            const selected = container.querySelector('input[name="device_imei"]:checked');
-            nextBtn.disabled = !selected;
+            if (nextBtn) nextBtn.disabled = !container.querySelector('input[name="device_imei"]:checked');
         };
-
         toggleNextState();
-        radios.forEach((radio) => {
-            radio.addEventListener('change', () => {
-                if (step1Warning) step1Warning.classList.add('hidden');
-                toggleNextState();
-            });
-        });
+        radios.forEach((radio) => radio.addEventListener('change', () => {
+            step1Warning?.classList.add('hidden');
+            toggleNextState();
+        }));
 
         container.querySelectorAll('[data-step-next]').forEach((button) => {
             button.addEventListener('click', () => {
-                const target = parseInt(button.dataset.stepNext || '1', 10);
-                if (button.dataset.requireSelection === 'true') {
-                    const selected = container.querySelector('input[name="device_imei"]:checked');
-                    if (!selected) {
-                        if (step1Warning) step1Warning.classList.remove('hidden');
-                        return;
-                    }
+                if (button.dataset.requireSelection === 'true' && !container.querySelector('input[name="device_imei"]:checked')) {
+                    step1Warning?.classList.remove('hidden');
+                    return;
                 }
-                showStep(target);
+                setStatus('');
+                showStep(parseInt(button.dataset.stepNext || '1', 10));
             });
         });
 
         container.querySelectorAll('[data-step-prev]').forEach((button) => {
             button.addEventListener('click', () => {
-                const target = parseInt(button.dataset.stepPrev || '1', 10);
-                showStep(target);
+                setStatus('');
+                showStep(parseInt(button.dataset.stepPrev || '1', 10));
             });
         });
 
-        const resendButtons = container.querySelectorAll('[data-resend-remaining]');
-        resendButtons.forEach((button) => {
-            const labelKey = button.dataset.resendLabel;
-            const remaining = parseInt(button.dataset.resendRemaining || '0', 10);
-            startCountdown(labelKey, remaining);
+        container.querySelectorAll('[data-resend-remaining]').forEach((button) => {
+            startCountdown(button.dataset.resendLabel, parseInt(button.dataset.resendRemaining || '0', 10));
         });
 
-        const ajaxButtons = container.querySelectorAll('[data-ajax-action]');
-        ajaxButtons.forEach((button) => {
+        container.querySelectorAll('[data-ajax-action]').forEach((button) => {
             button.addEventListener('click', async () => {
                 const action = button.getAttribute('formaction');
                 if (!action) return;
 
                 clearErrors();
                 setStatus('');
-                if (devOtpNew) devOtpNew.classList.add('hidden');
-                if (devOtpOld) devOtpOld.classList.add('hidden');
+                devOtpNew?.classList.add('hidden');
+                devOtpOld?.classList.add('hidden');
 
                 const formData = new FormData(container);
                 const recipient = button.dataset.recipient;
-                if (recipient) {
-                    formData.set('recipient', recipient);
+                if (recipient) formData.set('recipient', recipient);
+
+                const wasDisabled = button.disabled;
+                button.disabled = true;
+                let data = {};
+                let response;
+                try {
+                    response = await fetch(action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                        },
+                        body: formData,
+                    });
+                    data = await response.json().catch(() => ({}));
+                } catch (e) {
+                    button.disabled = wasDisabled;
+                    setStatus('Network error. Please try again.', true);
+                    return;
                 }
-
-                const response = await fetch(action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                        ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
-                    },
-                    body: formData,
-                });
-
-                const data = await response.json().catch(() => ({}));
+                button.disabled = wasDisabled;
 
                 if (!response.ok) {
                     if (response.status === 429 && data.cooldown && recipient) {
@@ -495,19 +406,16 @@
                         return;
                     }
                     setErrors(data.errors);
-                    if (data.message) setStatus(data.message);
+                    if (data.message) setStatus(data.message, true);
                     return;
                 }
 
                 if (button.dataset.ajaxAction === 'send') {
                     if (data.status) setStatus(data.status);
-                    if (recipient === 'new' && devOtpNew && data.dev_otp) {
-                        devOtpNew.textContent = `Dev OTP (new owner): ${data.dev_otp}`;
-                        devOtpNew.classList.remove('hidden');
-                    }
-                    if (recipient === 'old' && devOtpOld && data.dev_otp) {
-                        devOtpOld.textContent = `Dev OTP (old owner): ${data.dev_otp}`;
-                        devOtpOld.classList.remove('hidden');
+                    const devEl = recipient === 'new' ? devOtpNew : devOtpOld;
+                    if (devEl && data.dev_otp) {
+                        devEl.textContent = `Dev OTP (${recipient === 'new' ? 'new' : 'old'} owner): ${data.dev_otp}`;
+                        devEl.classList.remove('hidden');
                     }
                     startCountdown(recipient, data.resend_seconds);
                     return;
@@ -515,11 +423,7 @@
 
                 if (button.dataset.ajaxAction === 'verify') {
                     if (data.message) setStatus(data.message);
-                    if (recipient === 'new') {
-                        showStep(3);
-                    } else if (recipient === 'old') {
-                        showStep(4);
-                    }
+                    showStep(recipient === 'new' ? 3 : 4);
                 }
             });
         });

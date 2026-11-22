@@ -30,5 +30,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(DeviceCatalogSeeder::class);
+        $this->call(HomeBannerSeeder::class);
+        $this->call(HomeFeatureSeeder::class);
     }
 }

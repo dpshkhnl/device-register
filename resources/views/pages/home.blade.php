@@ -2,299 +2,341 @@
 
 @section('content')
 @php
+    $img = function ($path) {
+        if (! $path) return '';
+        if (str_starts_with($path, 'http')) return $path;
+        if (str_starts_with($path, '/images/')) return asset($path);
+        return asset('storage/'.$path);
+    };
+
     $bannerItems = ($banners ?? collect());
     if ($bannerItems->isEmpty()) {
         $bannerItems = collect([
-            [
-                'title' => 'Secure Your Mobile Devices Nationwide',
-                'subtitle' => 'Verify any IMEI in seconds and protect yourself from device fraud.',
-                'link_label' => 'Verify an IMEI',
-                'link_url' => route('verification'),
-                'image_url' => '/images/banner-1.svg',
-            ],
-            [
-                'title' => 'Fraud Protection for Second-Hand Buyers',
-                'subtitle' => 'Check full ownership history before you purchase any device.',
-                'link_label' => 'Start a check',
-                'link_url' => route('verification'),
-                'image_url' => '/images/banner-2.svg',
-            ],
+            ['title' => 'Know the phone before you trust it', 'subtitle' => 'Check any IMEI in seconds to see if a device is registered, active, or reported stolen.', 'link_label' => 'Check an IMEI', 'link_url' => route('verification'), 'image_url' => '/images/banners/verify-before-you-buy.jpg'],
+            ['title' => 'Buying second-hand? Check it first', 'subtitle' => 'See a device’s registry status before you hand over any money.', 'link_label' => 'Run a free check', 'link_url' => route('verification'), 'image_url' => '/images/banners/second-hand-phones.jpg'],
+            ['title' => 'Selling? Transfer ownership in minutes', 'subtitle' => 'Both owners confirm with an SMS code and the record updates instantly.', 'link_label' => 'Transfer a device', 'link_url' => route('transfer'), 'image_url' => '/images/banners/ownership-transfer.jpg'],
+            ['title' => 'Lost your phone? Flag it instantly', 'subtitle' => 'Anyone who checks its IMEI will be warned not to buy it.', 'link_label' => 'Report a device', 'link_url' => route('lost-found.index'), 'image_url' => '/images/banners/lost-phone.jpg'],
         ]);
     }
+    $slides = $bannerItems->map(fn ($b) => [
+        'title' => data_get($b, 'title'),
+        'subtitle' => data_get($b, 'subtitle'),
+        'link_label' => data_get($b, 'link_label'),
+        'link_url' => data_get($b, 'link_url'),
+        'image' => $img(data_get($b, 'image_url')) ?: asset('images/banners/verify-before-you-buy.jpg'),
+    ])->values();
+    $first = $slides->first();
 
-    $bannerSlides = $bannerItems->map(function ($banner) {
-        $image = data_get($banner, 'image_url');
-        $imageUrl = $image
-            ? (str_starts_with($image, '/images/') ? asset($image) : asset('storage/'.$image))
-            : '';
-        return [
-            'title'       => data_get($banner, 'title'),
-            'subtitle'    => data_get($banner, 'subtitle'),
-            'link_label'  => data_get($banner, 'link_label'),
-            'link_url'    => data_get($banner, 'link_url'),
-            'image_url'   => $imageUrl,
-        ];
-    })->values();
+    $heroSecondaryLabel = $settings?->hero_secondary_label ?? 'Register a device';
+    $heroSecondaryUrl = $settings?->hero_secondary_url ?? route('register-device');
 
-    $heroTitle         = $settings?->hero_title         ?? 'Secure Your Mobile Devices';
-    $heroSubtitle      = $settings?->hero_subtitle      ?? 'Verify IMEI, register devices, and protect yourself from fraud with the national device registry.';
-    $heroPrimaryLabel  = $settings?->hero_primary_label ?? 'Register Device';
-    $heroPrimaryUrl    = $settings?->hero_primary_url   ?? route('register-device');
-    $heroSecondaryLabel= $settings?->hero_secondary_label ?? 'Check Status';
-    $heroSecondaryUrl  = $settings?->hero_secondary_url   ?? route('verification');
+    $tasks = [
+        ['icon' => 'search', 'title' => 'Check an IMEI', 'text' => 'See if a phone is registered, active, or reported stolen.', 'url' => route('verification'), 'bg' => 'from-indigo-50 to-white', 'tile' => 'bg-indigo-600 text-white', 'ring' => 'hover:ring-indigo-200'],
+        ['icon' => 'phone', 'title' => 'Register my device', 'text' => 'Put your phone on record under your own name.', 'url' => route('register-device'), 'bg' => 'from-emerald-50 to-white', 'tile' => 'bg-emerald-600 text-white', 'ring' => 'hover:ring-emerald-200'],
+        ['icon' => 'transfer', 'title' => 'Sell or give away', 'text' => 'Move ownership to someone else with two SMS codes.', 'url' => route('transfer'), 'bg' => 'from-amber-50 to-white', 'tile' => 'bg-amber-500 text-white', 'ring' => 'hover:ring-amber-200'],
+        ['icon' => 'alert', 'title' => 'Report lost or stolen', 'text' => 'Flag your phone so it can’t be resold.', 'url' => route('lost-found.index'), 'bg' => 'from-rose-50 to-white', 'tile' => 'bg-rose-600 text-white', 'ring' => 'hover:ring-rose-200'],
+    ];
+
+    $iconMap = ['shield' => 'shield-check', 'transfer' => 'transfer', 'alert' => 'alert', 'certificate' => 'document', 'device' => 'phone', 'list' => 'search'];
 @endphp
 
-{{-- ═══════════════════════════════════════════════
-     HERO
-═══════════════════════════════════════════════ --}}
+{{-- ═══ Hero carousel ═══════════════════════════════════ --}}
 <section
-    x-data="{ active: 0, slides: @json($bannerSlides) }"
-    x-init="setInterval(() => active = (active + 1) % slides.length, 6000)"
-    class="relative min-h-[75vh] flex items-center overflow-hidden"
-    style="background: linear-gradient(160deg, #0a1420 0%, #132132 100%);"
+    x-data="{
+        active: 0,
+        slides: @js($slides),
+        timer: null,
+        go(i) { this.active = (i + this.slides.length) % this.slides.length; this.restart(); },
+        restart() { clearInterval(this.timer); if (this.slides.length > 1) this.timer = setInterval(() => this.active = (this.active + 1) % this.slides.length, 6500); },
+    }"
+    x-init="restart()"
+    class="relative overflow-hidden bg-[hsl(232_45%_10%)] text-white"
 >
-    {{-- Ledger-grid texture --}}
-    <div class="absolute inset-0 bg-hero-dots opacity-50 pointer-events-none"></div>
+    {{-- Background images --}}
+    <template x-for="(slide, i) in slides" :key="'bg' + i">
+        <div class="absolute inset-0 transition-opacity duration-1000 ease-out" :class="i === active ? 'opacity-100' : 'opacity-0'">
+            <img :src="slide.image" alt="" class="h-full w-full scale-105 object-cover transition-transform duration-[7000ms] ease-out" :class="i === active && 'scale-100'" />
+        </div>
+    </template>
+    <noscript><img src="{{ $first['image'] }}" alt="" class="absolute inset-0 h-full w-full object-cover" /></noscript>
+    <div class="absolute inset-0 bg-gradient-to-r from-[hsl(232_50%_8%)] via-[hsl(232_50%_8%/0.82)] to-[hsl(232_50%_8%/0.25)]"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-[hsl(232_50%_8%/0.7)] via-transparent to-transparent"></div>
 
-    {{-- Seal ring — the one bold decorative moment --}}
-    <div class="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full border border-teal-400/10 hidden lg:block"></div>
-    <div class="pointer-events-none absolute -right-8 -top-8 h-[300px] w-[300px] rounded-full border border-gold/10 hidden lg:block"></div>
+    <div class="container relative grid min-h-[640px] items-center gap-12 py-20 lg:min-h-[700px] lg:grid-cols-[1.15fr,0.85fr]">
+        <div class="max-w-2xl">
+            <span class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 py-1.5 pl-1.5 pr-3 text-xs font-semibold backdrop-blur">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-primary"><x-site.icon name="shield-check" class="h-3 w-3" stroke="2.4" /></span>
+                National device registry
+            </span>
 
-    <div class="container relative z-10 py-12 lg:py-16">
-        <div class="mx-auto max-w-5xl text-center">
-
-            {{-- Badge --}}
-            <div class="mb-5 inline-flex items-center rounded-md border px-3 py-1 text-xs font-medium tracking-wide"
-                 style="border-color: rgba(45,212,200,0.3); color: #7fe4da; background: rgba(45,212,200,0.08);">
-                Device registry platform
+            <div class="relative mt-6 min-h-[13rem] sm:min-h-[15rem]">
+                <template x-for="(slide, i) in slides" :key="'t' + i">
+                    <div x-show="i === active"
+                         x-transition:enter="transition ease-out duration-700 delay-150" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-200 absolute inset-x-0 top-0" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                        <h1 class="font-display text-balance text-5xl leading-[1.02] sm:text-6xl lg:text-7xl" x-text="slide.title"></h1>
+                        <p class="mt-5 max-w-xl text-lg leading-relaxed text-white/75" x-text="slide.subtitle"></p>
+                    </div>
+                </template>
+                <noscript>
+                    <h1 class="font-display text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">{{ $first['title'] }}</h1>
+                    <p class="mt-5 max-w-xl text-lg text-white/75">{{ $first['subtitle'] }}</p>
+                </noscript>
             </div>
 
-            {{-- Headline (from slides) --}}
-            <h1 class="font-display mb-5 text-5xl font-semibold leading-tight tracking-tight text-white lg:text-7xl text-balance"
-                x-text="slides[active]?.title || @json($heroTitle)">
-                {!! nl2br(e($heroTitle)) !!}
-            </h1>
-
-            {{-- Sub-headline --}}
-            <p class="mx-auto mb-7 max-w-2xl text-lg leading-relaxed text-slate-300"
-               x-text="slides[active]?.subtitle || @json($heroSubtitle)">
-                {{ $heroSubtitle }}
-            </p>
-
-            {{-- IMEI Search --}}
-            <form method="GET" action="{{ route('verification') }}"
-                  class="mx-auto mb-5 flex max-w-2xl flex-col gap-3 sm:flex-row">
-                <div class="relative flex-1">
-                    <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 pointer-events-none"
-                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="11" cy="11" r="7"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 20l-3-3"/>
-                    </svg>
-                    <input
-                        type="text"
-                        name="imei"
-                        placeholder="Enter IMEI or serial number"
-                        maxlength="50"
-                        class="glass-input h-14 w-full pl-12 pr-4 text-base"
-                    />
+            {{-- IMEI search --}}
+            <form method="GET" action="{{ route('verification') }}" class="mt-6 max-w-xl">
+                <label for="hero-imei" class="sr-only">IMEI or serial number</label>
+                <div class="flex items-center gap-2 rounded-2xl bg-white p-2 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] ring-4 ring-white/10">
+                    <x-site.icon name="search" class="ml-3 h-5 w-5 shrink-0 text-muted-foreground" />
+                    <input id="hero-imei" type="text" name="imei" maxlength="50" autocomplete="off" placeholder="Enter IMEI or serial number"
+                           class="h-12 min-w-0 flex-1 border-0 bg-transparent px-1 font-mono text-[15px] tracking-wide text-foreground placeholder:font-sans placeholder:tracking-normal placeholder:text-muted-foreground/70 focus:outline-none focus:ring-0" />
+                    <button type="submit" class="btn btn-primary h-12 px-5 sm:px-6">
+                        <span class="hidden sm:inline">Check now</span>
+                        <x-site.icon name="arrow-right" class="h-4 w-4" stroke="2.2" />
+                    </button>
                 </div>
-                <button type="submit"
-                        class="btn-gradient h-14 px-8 text-sm font-semibold shadow-glow-blue whitespace-nowrap">
-                    Verify IMEI
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
-                    </svg>
-                </button>
+                <p class="mt-3 pl-1 text-xs text-white/60">Dial <span class="rounded bg-white/15 px-1.5 py-0.5 font-mono font-semibold text-white">*#06#</span> on any phone to see its IMEI.</p>
             </form>
 
-            {{-- CTA Buttons --}}
-            <div class="flex flex-wrap items-center justify-center gap-3">
-                <a href="{{ $heroPrimaryUrl }}"
-                   class="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-soft hover:bg-white/90 transition-all hover:-translate-y-px">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="6" y="3" width="12" height="18" rx="2"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 17h4"/>
-                    </svg>
-                    {{ $heroPrimaryLabel }}
-                </a>
-                <a href="{{ $heroSecondaryUrl }}"
-                   class="btn-ghost-light px-6 py-3 text-sm font-semibold">
-                    {{ $heroSecondaryLabel }}
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </div>
-
-            {{-- Slide indicators --}}
-            <div class="mt-6 flex items-center justify-center gap-2">
-                <template x-for="(slide, index) in slides" :key="index">
-                    <button
-                        type="button"
-                        class="rounded-full transition-all duration-300"
-                        :class="index === active ? 'w-8 h-2 bg-white' : 'w-2 h-2 bg-white/30'"
-                        @click="active = index"
-                    ></button>
+            <div class="mt-7 flex flex-wrap items-center gap-3">
+                <template x-if="slides[active]?.link_url && slides[active]?.link_label">
+                    <a :href="slides[active].link_url" class="btn bg-white/95 text-foreground hover:bg-white">
+                        <span x-text="slides[active].link_label"></span> <x-site.icon name="arrow-right" class="h-4 w-4" />
+                    </a>
                 </template>
+                <a href="{{ $heroSecondaryUrl }}"
+                   x-show="(slides[active]?.link_label || '').toLowerCase() !== @js(strtolower($heroSecondaryLabel))"
+                   class="btn border border-white/25 text-white backdrop-blur hover:bg-white/10">{{ $heroSecondaryLabel }}</a>
             </div>
         </div>
-    </div>
 
-    {{-- Bottom fade --}}
-    <div class="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-         style="background: linear-gradient(to bottom, transparent, hsl(var(--background)));"></div>
-</section>
-
-
-{{-- ═══════════════════════════════════════════════
-     TRUST BADGES
-═══════════════════════════════════════════════ --}}
-<section class="relative bg-background py-6">
-    <div class="container">
-        <div class="grid gap-4 sm:grid-cols-3">
-
-            <div class="flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft transition-shadow hover:shadow-card">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                     style="background: rgba(200,151,62,0.12);">
-                    <svg class="h-6 w-6" style="color: #9c6b1f;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+        {{-- Floating verdict cards --}}
+        <div class="relative hidden h-full lg:block" aria-hidden="true">
+            <div class="absolute right-0 top-1/2 w-80 -translate-y-1/2 rotate-[2deg] rounded-3xl bg-white/95 p-6 text-foreground shadow-[0_40px_80px_-30px_rgba(0,0,0,0.7)] backdrop-blur">
+                <div class="flex items-center justify-between">
+                    <span class="eyebrow">Registry result</span>
+                    <span class="pill pill-success">Active</span>
                 </div>
-                <div>
-                    <p class="text-sm font-semibold text-foreground">Certified Status</p>
-                    <p class="text-xs text-muted-foreground">Download proof</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft transition-shadow hover:shadow-card">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                     style="background: rgba(14,124,134,0.1);">
-                    <svg class="h-6 w-6" style="color: #0e7c86;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="6" y="3" width="12" height="18" rx="2"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 17h4M9 7h6M9 11h3"/>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-sm font-semibold text-foreground">IMEI Verified</p>
-                    <p class="text-xs text-muted-foreground">Real-time registry checks</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft transition-shadow hover:shadow-card">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                     style="background: rgba(179,38,30,0.1);">
-                    <svg class="h-6 w-6" style="color: #b3261e;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-sm font-semibold text-foreground">Fraud Protection</p>
-                    <p class="text-xs text-muted-foreground">Flag stolen devices fast</p>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-
-{{-- ═══════════════════════════════════════════════
-     FEATURES
-═══════════════════════════════════════════════ --}}
-<section id="features" class="bg-muted/40 py-10 lg:py-14">
-    <div class="container">
-
-        <div class="mb-8 text-center">
-            <span class="section-badge mb-4">Core Features</span>
-            <h2 class="font-display mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Everything you need to protect your device
-            </h2>
-            <p class="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-                A complete suite of tools for device verification, registration, and protection
-            </p>
-        </div>
-
-        @php
-            $featureItems = ($features ?? collect());
-            if ($featureItems->isEmpty()) {
-                $featureItems = collect([
-                    [
-                        'icon' => 'shield',
-                        'title' => 'Secure IMEI Verification',
-                        'description' => "Instantly verify any device's IMEI status. Check if a device is active, transferred, lost, or flagged.",
-                        'button_label' => 'Verify Now',
-                        'icon_color' => '#0e7c86',
-                        'icon_bg' => 'rgba(14,124,134,0.1)',
-                    ],
-                    [
-                        'icon' => 'transfer',
-                        'title' => 'Ownership Transfer',
-                        'description' => 'Safely transfer device ownership with OTP verification. Complete audit trail for every transaction.',
-                        'button_label' => 'Transfer Device',
-                        'icon_color' => '#9c6b1f',
-                        'icon_bg' => 'rgba(200,151,62,0.12)',
-                    ],
-                    [
-                        'icon' => 'alert',
-                        'title' => 'Report Lost / Stolen',
-                        'description' => 'Report missing devices immediately. Flag devices to prevent unauthorized sales and usage.',
-                        'button_label' => 'Report Device',
-                        'icon_color' => '#b3261e',
-                        'icon_bg' => 'rgba(179,38,30,0.1)',
-                    ],
-                    [
-                        'icon' => 'certificate',
-                        'title' => 'Status Certificate',
-                        'description' => 'Download PDF certificates with QR verification for proof of device status.',
-                        'button_label' => 'Get Certificate',
-                        'icon_color' => '#33465b',
-                        'icon_bg' => 'rgba(51,70,91,0.1)',
-                    ],
-                ]);
-            }
-        @endphp
-
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            @foreach ($featureItems as $feature)
-                @php
-                    $iconKey  = data_get($feature, 'icon', 'shield');
-                    $label    = data_get($feature, 'button_label', 'Learn More');
-                    $iconBg   = data_get($feature, 'icon_bg', 'rgba(14,124,134,0.1)');
-                    $iconClr  = data_get($feature, 'icon_color', '#0e7c86');
-                @endphp
-                <div class="feature-card group flex flex-col">
-                    <div class="mb-5 flex h-13 w-13 items-center justify-center rounded-xl p-3"
-                         style="background: {{ $iconBg }};">
-                        @if ($iconKey === 'transfer')
-                            <svg class="h-6 w-6" style="color:{{ $iconClr }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h10m0 0-3-3m3 3-3 3M17 17H7m0 0 3 3m-3-3 3-3"/>
-                            </svg>
-                        @elseif ($iconKey === 'alert')
-                            <svg class="h-6 w-6" style="color:{{ $iconClr }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                            </svg>
-                        @elseif ($iconKey === 'certificate')
-                            <svg class="h-6 w-6" style="color:{{ $iconClr }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 4h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 4v4h4M9 12h6M9 15h4"/>
-                            </svg>
-                        @else
-                            <svg class="h-6 w-6" style="color:{{ $iconClr }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
-                            </svg>
-                        @endif
+                <div class="mt-4 flex items-center gap-3">
+                    <span class="icon-tile h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600"><x-site.icon name="shield-check" class="h-6 w-6" /></span>
+                    <div>
+                        <p class="font-display text-2xl leading-tight">Safe to buy</p>
+                        <p class="text-xs text-muted-foreground">Registered · not reported</p>
                     </div>
+                </div>
+                <dl class="mt-5 space-y-2 text-sm">
+                    @foreach (['Device' => 'Galaxy S24 · 256 GB', 'IMEI' => '3519 •••• 8901', 'Since' => 'Mar 2025'] as $k => $v)
+                        <div class="flex justify-between rounded-lg bg-muted/70 px-3 py-2">
+                            <dt class="text-muted-foreground">{{ $k }}</dt>
+                            <dd class="font-semibold {{ $k === 'IMEI' ? 'font-mono text-xs leading-5' : '' }}">{{ $v }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+            </div>
+            <div class="absolute bottom-16 right-56 flex -rotate-3 items-center gap-3 rounded-2xl bg-white/95 px-4 py-3 text-foreground shadow-2xl">
+                <span class="icon-tile h-9 w-9 bg-rose-50 text-rose-600"><x-site.icon name="alert" class="h-4 w-4" /></span>
+                <div class="text-xs">
+                    <p class="font-semibold">Stolen phones flagged</p>
+                    <p class="text-muted-foreground">within minutes of a report</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <h3 class="mb-2 text-base font-bold text-foreground">{{ data_get($feature, 'title') }}</h3>
-                    <p class="mb-5 flex-1 text-sm leading-relaxed text-muted-foreground">{{ data_get($feature, 'description') }}</p>
+    {{-- Slide controls --}}
+    <div class="container relative flex items-center justify-between gap-4 pb-24" x-show="slides.length > 1">
+        <div class="flex flex-1 gap-2">
+            <template x-for="(slide, i) in slides" :key="'d' + i">
+                <button type="button" @click="go(i)" class="group flex-1 py-2 text-left" :aria-label="'Show slide ' + (i + 1)">
+                    <span class="block h-1 overflow-hidden rounded-full bg-white/20">
+                        <span class="block h-full rounded-full bg-white transition-all ease-linear"
+                              :class="i === active ? 'w-full duration-[6500ms]' : (i < active ? 'w-full duration-0' : 'w-0 duration-0')"></span>
+                    </span>
+                    <span class="mt-2 hidden truncate text-xs font-medium transition sm:block" :class="i === active ? 'text-white' : 'text-white/50 group-hover:text-white/80'" x-text="slide.title"></span>
+                </button>
+            </template>
+        </div>
+        <div class="flex gap-2">
+            <button type="button" @click="go(active - 1)" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 transition hover:bg-white/10" aria-label="Previous"><x-site.icon name="arrow-left" class="h-4 w-4" /></button>
+            <button type="button" @click="go(active + 1)" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 transition hover:bg-white/10" aria-label="Next"><x-site.icon name="arrow-right" class="h-4 w-4" /></button>
+        </div>
+    </div>
+</section>
 
+{{-- ═══ Stats bar (overlaps hero) ═══════════════════════ --}}
+@php
+    $statItems = ($stats ?? collect());
+    if ($statItems->isEmpty()) {
+        $statItems = collect([
+            ['value' => '2.5M+', 'label' => 'Devices verified'],
+            ['value' => '500K+', 'label' => 'Registered users'],
+            ['value' => '99.9%', 'label' => 'Uptime'],
+            ['value' => '24/7', 'label' => 'Support'],
+        ]);
+    }
+@endphp
+<section class="container relative z-10 -mt-14">
+    <dl class="surface grid grid-cols-2 divide-border overflow-hidden lg:grid-cols-4 lg:divide-x">
+        @foreach ($statItems as $i => $stat)
+            <div class="px-6 py-6 text-center sm:py-7 {{ $i < 2 ? 'border-b border-border lg:border-b-0' : '' }} {{ $i % 2 === 0 ? 'border-r border-border lg:border-r-0' : '' }}">
+                <dd class="font-display text-4xl text-primary sm:text-5xl">{{ data_get($stat, 'value') }}</dd>
+                <dt class="mt-1 text-sm font-medium text-muted-foreground">{{ data_get($stat, 'label') }}</dt>
+            </div>
+        @endforeach
+    </dl>
+</section>
+
+{{-- ═══ Tasks ═══════════════════════════════════════════ --}}
+<section class="container py-20">
+    <div class="mx-auto max-w-2xl text-center">
+        <p class="eyebrow">Start here</p>
+        <h2 class="font-display mt-3 text-4xl text-foreground sm:text-5xl">What would you like to do?</h2>
+        <p class="mt-3 text-muted-foreground">Pick a task — we’ll walk you through it step by step.</p>
+    </div>
+    <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach ($tasks as $task)
+            <a href="{{ $task['url'] }}" class="group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-gradient-to-b {{ $task['bg'] }} p-6 ring-4 ring-transparent transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-24px_rgba(20,22,40,0.35)] {{ $task['ring'] }}">
+                <span class="icon-tile h-14 w-14 rounded-2xl shadow-lg {{ $task['tile'] }}"><x-site.icon :name="$task['icon']" class="h-6 w-6" /></span>
+                <h3 class="mt-8 text-lg font-bold text-foreground">{{ $task['title'] }}</h3>
+                <p class="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">{{ $task['text'] }}</p>
+                <span class="mt-6 flex items-center justify-between text-sm font-semibold text-foreground">
+                    Get started
+                    <span class="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background transition group-hover:translate-x-1">
+                        <x-site.icon name="arrow-right" class="h-4 w-4" stroke="2.2" />
+                    </span>
+                </span>
+            </a>
+        @endforeach
+    </div>
+    @guest
+        <p class="mt-6 text-center text-sm text-muted-foreground">
+            Checking an IMEI is open to everyone. Registering, transferring and reporting need a free account —
+            <a href="{{ route('register') }}" class="font-semibold text-primary hover:underline">create one in a minute</a>.
+        </p>
+    @endguest
+</section>
+
+{{-- ═══ Buying second-hand ══════════════════════════════ --}}
+<section class="container pb-20">
+    <div class="grid items-center gap-12 overflow-hidden rounded-[2rem] bg-card p-6 ring-1 ring-border sm:p-10 lg:grid-cols-2 lg:gap-16 lg:p-14">
+        <div class="relative">
+            <img src="{{ asset('images/banners/phone-on-desk.jpg') }}" alt="A smartphone on a wooden desk" loading="lazy"
+                 class="aspect-[4/3] w-full rounded-3xl object-cover shadow-[0_30px_60px_-30px_rgba(20,22,40,0.5)]" />
+            <div class="absolute -bottom-5 left-5 flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-xl ring-1 ring-border sm:left-8">
+                <span class="icon-tile h-10 w-10 bg-rose-50 text-rose-600"><x-site.icon name="alert" class="h-5 w-5" /></span>
+                <div>
+                    <p class="text-sm font-bold text-foreground">Reported stolen</p>
+                    <p class="text-xs text-muted-foreground">Do not buy this device</p>
+                </div>
+            </div>
+            <div class="absolute -top-4 right-5 hidden items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-lg sm:flex">
+                <x-site.icon name="check" class="h-4 w-4" stroke="2.6" /> Checked in 2 seconds
+            </div>
+        </div>
+        <div>
+            <p class="eyebrow">Buying second-hand?</p>
+            <h2 class="font-display mt-3 text-4xl leading-tight text-foreground sm:text-5xl">Thirty seconds that could save you thousands</h2>
+            <p class="mt-4 text-muted-foreground">Stolen phones are often resold within hours. Before you pay, ask for the IMEI and check it here.</p>
+            <ul class="mt-8 space-y-4">
+                @foreach ([
+                    ['Ask the seller to dial *#06#', 'The IMEI appears on screen — no apps needed.'],
+                    ['Check it against the registry', 'We’ll tell you if it’s registered, active, or reported.'],
+                    ['Transfer ownership on the spot', 'The seller sends it to your name with an SMS code.'],
+                ] as $n => [$t, $d])
+                    <li class="flex gap-4">
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{{ $n + 1 }}</span>
+                        <div>
+                            <p class="font-semibold text-foreground">{{ $t }}</p>
+                            <p class="text-sm text-muted-foreground">{{ $d }}</p>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+            <a href="{{ route('verification') }}" class="btn btn-primary btn-lg mt-9">
+                <x-site.icon name="search" class="h-4 w-4" stroke="2.2" /> Check a phone now
+            </a>
+        </div>
+    </div>
+</section>
+
+{{-- ═══ How it works (dark) ═════════════════════════════ --}}
+@php
+    $stepItems = ($steps ?? collect());
+    if ($stepItems->isEmpty()) {
+        $stepItems = collect([
+            ['title' => 'Check the IMEI', 'description' => 'Enter the 15-digit IMEI to see a device’s status instantly.', 'icon' => 'list'],
+            ['title' => 'Register or transfer', 'description' => 'Register your device, or hand it over securely with OTP.', 'icon' => 'device'],
+            ['title' => 'Report if lost', 'description' => 'Flag a missing device so nobody else can use or sell it.', 'icon' => 'alert'],
+            ['title' => 'Prove ownership', 'description' => 'Your registry record is your proof whenever you need it.', 'icon' => 'certificate'],
+        ]);
+    }
+@endphp
+<section id="how-it-works" class="relative scroll-mt-16 overflow-hidden bg-[hsl(232_45%_10%)] py-24 text-white">
+    <div class="pointer-events-none absolute -left-40 top-0 h-[30rem] w-[30rem] rounded-full bg-primary/40 blur-[120px]"></div>
+    <div class="pointer-events-none absolute -right-20 bottom-0 h-96 w-96 rounded-full bg-amber-400/15 blur-[100px]"></div>
+    <div class="pointer-events-none absolute inset-0 opacity-[0.06]" style="background-image: radial-gradient(circle, #fff 1px, transparent 1px); background-size: 26px 26px;"></div>
+
+    <div class="container relative">
+        <div class="mx-auto max-w-2xl text-center">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">How it works</p>
+            <h2 class="font-display mt-3 text-4xl leading-tight sm:text-5xl">Four steps to a phone that’s <em class="text-amber-300">provably yours</em></h2>
+            <p class="mt-4 text-white/60">No paperwork, no queues. Everything happens online and every change is verified by OTP.</p>
+        </div>
+        <ol class="relative mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="absolute left-[12%] right-[12%] top-8 hidden h-px bg-gradient-to-r from-transparent via-white/25 to-transparent lg:block"></div>
+            @foreach ($stepItems as $index => $step)
+                <li class="relative text-center">
+                    <span class="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
+                        <x-site.icon :name="$iconMap[data_get($step, 'icon', 'list')] ?? 'shield-check'" class="h-7 w-7 text-white" />
+                        <span class="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-amber-300 text-[11px] font-bold text-[hsl(232_45%_10%)]">{{ $index + 1 }}</span>
+                    </span>
+                    <h3 class="mt-6 text-lg font-bold">{{ data_get($step, 'title') }}</h3>
+                    <p class="mx-auto mt-2 max-w-[16rem] text-sm leading-relaxed text-white/60">{{ data_get($step, 'description') }}</p>
+                </li>
+            @endforeach
+        </ol>
+    </div>
+</section>
+
+{{-- ═══ Features ════════════════════════════════════════ --}}
+@php
+    $featureItems = ($features ?? collect());
+    if ($featureItems->isEmpty()) {
+        $featureItems = collect([
+            ['icon' => 'shield', 'title' => 'Secure IMEI verification', 'description' => 'Instantly check whether a device is active, transferred, lost, or flagged.', 'button_label' => 'Verify now', 'button_url' => route('verification')],
+            ['icon' => 'transfer', 'title' => 'Ownership transfer', 'description' => 'OTP verification on both sides and a full audit trail.', 'button_label' => 'Transfer a device', 'button_url' => route('transfer')],
+            ['icon' => 'alert', 'title' => 'Lost & stolen reports', 'description' => 'Report missing devices to stop unauthorised sale and use.', 'button_label' => 'Report a device', 'button_url' => route('lost-found.index')],
+            ['icon' => 'certificate', 'title' => 'Status records', 'description' => 'A trusted record buyers and authorities can rely on.', 'button_label' => 'Check a status', 'button_url' => route('verification')],
+        ]);
+    }
+    $featureTones = ['bg-indigo-600', 'bg-amber-500', 'bg-rose-600', 'bg-emerald-600'];
+@endphp
+<section id="features" class="container py-24">
+    <div class="grid gap-12 lg:grid-cols-[0.8fr,1.2fr] lg:items-start">
+        <div class="lg:sticky lg:top-28">
+            <p class="eyebrow">Everything in one place</p>
+            <h2 class="font-display mt-3 text-4xl leading-tight text-foreground sm:text-5xl">Built to protect every device</h2>
+            <p class="mt-4 max-w-md text-muted-foreground">Government-backed records with tamper-proof logs, integrated with law enforcement nationwide.</p>
+            <div class="mt-8 flex flex-wrap gap-2">
+                @foreach (['Prevent fraud', 'Secure transactions', 'Verified records', 'Authority backed'] as $tag)
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-foreground ring-1 ring-border">
+                        <x-site.icon name="check" class="h-3.5 w-3.5 text-primary" stroke="2.6" /> {{ $tag }}
+                    </span>
+                @endforeach
+            </div>
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+            @foreach ($featureItems as $i => $feature)
+                <div class="surface group flex flex-col p-7 transition duration-300 hover:-translate-y-1 {{ $i % 2 === 1 ? 'sm:translate-y-8 sm:hover:translate-y-7' : '' }}">
+                    <span class="icon-tile h-12 w-12 rounded-2xl text-white shadow-lg {{ $featureTones[$i % 4] }}">
+                        <x-site.icon :name="$iconMap[data_get($feature, 'icon', 'shield')] ?? 'shield-check'" />
+                    </span>
+                    <h3 class="mt-6 text-lg font-bold text-foreground">{{ data_get($feature, 'title') }}</h3>
+                    <p class="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{{ data_get($feature, 'description') }}</p>
                     @if (data_get($feature, 'button_url'))
-                        <a href="{{ data_get($feature, 'button_url') }}"
-                           class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80">
-                            {{ $label }}
-                            <svg class="h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
-                            </svg>
+                        <a href="{{ data_get($feature, 'button_url') }}" class="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                            {{ data_get($feature, 'button_label', 'Learn more') }} <x-site.icon name="arrow-right" class="h-4 w-4" />
                         </a>
                     @endif
                 </div>
@@ -303,329 +345,78 @@
     </div>
 </section>
 
-
-{{-- ═══════════════════════════════════════════════
-     HOW IT WORKS
-═══════════════════════════════════════════════ --}}
-<section class="bg-background py-10 lg:py-14">
+{{-- ═══ Testimonials ════════════════════════════════════ --}}
+@php
+    $testimonialItems = ($testimonials ?? collect());
+    if ($testimonialItems->isEmpty()) {
+        $testimonialItems = collect([
+            ['name' => 'Ayesha Rana', 'role' => 'Registered user', 'quote' => 'Checking the IMEI before buying a phone gave me total peace of mind. It took seconds.'],
+            ['name' => 'Rohan Patel', 'role' => 'Reseller', 'quote' => 'The transfer flow is fast and transparent, which keeps my customers confident on every sale.'],
+            ['name' => 'Nadia Khan', 'role' => 'Shop owner', 'quote' => 'Lost device reporting is simple and the status updates immediately. It saved me from a fraudulent deal.'],
+        ]);
+    }
+    $avatarTones = ['bg-indigo-100 text-indigo-700', 'bg-amber-100 text-amber-800', 'bg-emerald-100 text-emerald-700', 'bg-rose-100 text-rose-700'];
+@endphp
+<section class="bg-gradient-to-b from-muted/70 to-background py-24">
     <div class="container">
-
-        <div class="mb-8 text-center">
-            <span class="section-badge mb-4">Simple Process</span>
-            <h2 class="font-display mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                How it works
-            </h2>
-            <p class="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-                Four simple steps to verify, register, and protect your mobile devices
-            </p>
+        <div class="mx-auto max-w-2xl text-center">
+            <p class="eyebrow">In their words</p>
+            <h2 class="font-display mt-3 text-4xl text-foreground sm:text-5xl">People who checked first</h2>
         </div>
-
-        @php
-            $stepItems = ($steps ?? collect());
-            if ($stepItems->isEmpty()) {
-                $stepItems = collect([
-                    ['title' => 'IMEI Verification', 'description' => 'Enter the 15-digit IMEI number to instantly check device status and history.', 'icon' => 'list'],
-                    ['title' => 'Register / Transfer', 'description' => 'Register your device or transfer ownership securely with OTP verification.', 'icon' => 'device'],
-                    ['title' => 'Report Lost / Stolen', 'description' => 'Report missing devices to flag them and prevent unauthorized use.', 'icon' => 'alert'],
-                    ['title' => 'Get Certificate', 'description' => 'Download your status certificate with QR code verification.', 'icon' => 'certificate'],
-                ]);
-            }
-        @endphp
-
-        <div class="relative grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {{-- Connecting line (desktop only) --}}
-            <div class="absolute top-10 left-[12.5%] right-[12.5%] hidden h-px lg:block"
-                 style="background: linear-gradient(90deg, transparent 0%, #0e7c86 25%, #c9973e 75%, transparent 100%); opacity: 0.35;"></div>
-
-            @foreach ($stepItems as $index => $step)
-                @php
-                    $stepIcon   = data_get($step, 'icon', 'list');
-                    $stepNumber = str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
-                @endphp
-                <div class="relative flex flex-col items-center text-center">
-
-                    <div class="relative mb-6">
-                        <div class="flex h-20 w-20 items-center justify-center rounded-2xl border border-border bg-card shadow-soft">
-                            @if ($stepIcon === 'device')
-                                <svg class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <rect x="6" y="3" width="12" height="18" rx="2"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 17h4"/>
-                                </svg>
-                            @elseif ($stepIcon === 'alert')
-                                <svg class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                                </svg>
-                            @elseif ($stepIcon === 'certificate')
-                                <svg class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 4h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 4v4h4"/>
-                                </svg>
-                            @else
-                                <svg class="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/>
-                                </svg>
-                            @endif
-                        </div>
-                        <span class="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white shadow-soft"
-                              style="background: #0e7c86;">
-                            {{ $stepNumber }}
-                        </span>
-                    </div>
-
-                    <h3 class="mb-2 text-base font-bold text-foreground">{{ data_get($step, 'title') }}</h3>
-                    <p class="text-sm leading-relaxed text-muted-foreground">{{ data_get($step, 'description') }}</p>
-                </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-
-
-{{-- ═══════════════════════════════════════════════
-     STATS — dark gradient strip
-═══════════════════════════════════════════════ --}}
-<section class="relative overflow-hidden py-10 lg:py-12"
-         style="background: linear-gradient(160deg, #0a1420 0%, #132132 100%);">
-    <div class="absolute inset-0 bg-hero-dots opacity-30 pointer-events-none"></div>
-
-    <div class="container relative z-10">
-        <div class="mb-7 text-center">
-            <h2 class="font-display text-2xl font-semibold text-white sm:text-3xl">
-                Trusted by millions across the nation
-            </h2>
-        </div>
-
-        @php
-            $statItems = ($stats ?? collect());
-            if ($statItems->isEmpty()) {
-                $statItems = collect([
-                    ['value' => '2.5M+', 'label' => 'Devices Verified'],
-                    ['value' => '500K+', 'label' => 'Registered Users'],
-                    ['value' => '99.9%', 'label' => 'Uptime'],
-                    ['value' => '24/7',  'label' => 'Support'],
-                ]);
-            }
-        @endphp
-
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            @foreach ($statItems as $stat)
-                <div class="stat-card">
-                    <p class="mb-1 text-3xl font-extrabold text-white lg:text-4xl">
-                        {{ data_get($stat, 'value') }}
-                    </p>
-                    <p class="text-sm text-slate-400">{{ data_get($stat, 'label') }}</p>
-                </div>
-            @endforeach
-        </div>
-
-        <p class="mt-8 text-center text-sm text-slate-500">
-            Trusted by government agencies and law enforcement nationwide
-        </p>
-    </div>
-</section>
-
-
-{{-- ═══════════════════════════════════════════════
-     TESTIMONIALS
-═══════════════════════════════════════════════ --}}
-<section class="bg-muted/40 py-10 lg:py-14">
-    <div class="container">
-
-        <div class="mb-8 text-center">
-            <span class="section-badge mb-4">User Stories</span>
-            <h2 class="mt-4 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Trusted by citizens
-            </h2>
-            <p class="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                Real feedback from people using DRMS to secure their devices
-            </p>
-        </div>
-
-        @php
-            $testimonialItems = ($testimonials ?? collect());
-            if ($testimonialItems->isEmpty()) {
-                $testimonialItems = collect([
-                    ['name' => 'Ayesha Rana',  'role' => 'Registered User', 'quote' => 'Verifying my IMEI before buying a phone gave me total peace of mind. The process was instant and the certificate looked professional.'],
-                    ['name' => 'Rohan Patel',  'role' => 'Reseller',        'quote' => 'The transfer flow is fast and transparent, which keeps my customers confident. I use it for every second-hand sale.'],
-                    ['name' => 'Nadia Khan',   'role' => 'Shop Owner',      'quote' => 'Lost device reporting is simple, and the status updates are immediate. It saved me from a fraudulent transaction last month.'],
-                ]);
-            }
-        @endphp
-
-        <div class="grid gap-6 md:grid-cols-3">
-            @foreach ($testimonialItems as $testimonial)
-                <div class="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-soft transition-all hover:shadow-card hover:-translate-y-1 duration-300">
-                    {{-- Stars --}}
-                    <div class="mb-4 flex gap-0.5">
-                        @for ($i = 0; $i < 5; $i++)
-                            <svg class="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                            </svg>
+        <div class="mt-14 grid gap-5 md:grid-cols-3">
+            @foreach ($testimonialItems as $i => $testimonial)
+                <figure class="surface relative flex flex-col p-8">
+                    <span class="font-display absolute right-6 top-2 text-8xl leading-none text-primary/10">”</span>
+                    <div class="flex gap-0.5 text-amber-500">
+                        @for ($s = 0; $s < 5; $s++)
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5Z"/></svg>
                         @endfor
                     </div>
-
-                    {{-- Quote --}}
-                    <p class="flex-1 text-sm leading-relaxed text-muted-foreground">
-                        &ldquo;{{ data_get($testimonial, 'quote') }}&rdquo;
-                    </p>
-
-                    {{-- Author --}}
-                    <div class="mt-6 flex items-center gap-3 border-t border-border pt-4">
-                        @if (!empty(data_get($testimonial, 'avatar_url')))
-                            <img src="{{ data_get($testimonial, 'avatar_url') }}"
-                                 alt="{{ data_get($testimonial, 'name') }}"
-                                 class="h-10 w-10 rounded-full object-cover ring-2 ring-border"/>
+                    <blockquote class="font-display relative mt-5 flex-1 text-[1.4rem] leading-snug text-foreground">“{{ data_get($testimonial, 'quote') }}”</blockquote>
+                    <figcaption class="mt-8 flex items-center gap-3 border-t border-border pt-5">
+                        @if (! empty(data_get($testimonial, 'avatar_url')))
+                            <img src="{{ data_get($testimonial, 'avatar_url') }}" alt="" class="h-11 w-11 rounded-full object-cover ring-2 ring-border" />
                         @else
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-                                 style="background: #0e7c86;">
-                                {{ strtoupper(substr(data_get($testimonial, 'name', ''), 0, 1)) }}
-                            </div>
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold {{ $avatarTones[$i % 4] }}">
+                                {{ strtoupper(mb_substr(data_get($testimonial, 'name', ''), 0, 1)) }}
+                            </span>
                         @endif
                         <div>
                             <p class="text-sm font-semibold text-foreground">{{ data_get($testimonial, 'name') }}</p>
                             <p class="text-xs text-muted-foreground">{{ data_get($testimonial, 'role') }}</p>
                         </div>
-                    </div>
-                </div>
+                    </figcaption>
+                </figure>
             @endforeach
         </div>
     </div>
 </section>
 
-
-{{-- ═══════════════════════════════════════════════
-     WHY TRUST DRMS
-═══════════════════════════════════════════════ --}}
-<section class="bg-background py-10 lg:py-14">
-    <div class="container">
-        <div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
-
-            <div>
-                <span class="section-badge mb-4">Why Choose Us</span>
-                <h2 class="mt-4 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                    Built for security, designed for trust
-                </h2>
-                <p class="mt-4 mb-6 text-lg text-muted-foreground">
-                    Our platform ensures complete transparency in device verification with government-backed records.
-                </p>
-
-                <div class="grid gap-6 sm:grid-cols-2">
-                    @foreach ([
-                        ['title' => 'Prevent Fraud',       'desc' => 'Verify device authenticity before purchase to avoid stolen or counterfeit devices.', 'icon_bg' => 'rgba(179,38,30,0.1)', 'icon_clr' => '#b3261e'],
-                        ['title' => 'Secure Transactions', 'desc' => 'Safe second-hand purchases with verified ownership history and audit trails.', 'icon_bg' => 'rgba(14,124,134,0.1)', 'icon_clr' => '#0e7c86'],
-                        ['title' => 'Verified Records',    'desc' => 'Government-backed records with tamper-proof logs and digital certificates.', 'icon_bg' => 'rgba(200,151,62,0.12)', 'icon_clr' => '#9c6b1f'],
-                        ['title' => 'Authority Backed',    'desc' => 'Integrated with law enforcement for comprehensive device tracking nationwide.', 'icon_bg' => 'rgba(51,70,91,0.1)', 'icon_clr' => '#33465b'],
-                    ] as $benefit)
-                        <div class="flex gap-4">
-                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                                 style="background: {{ $benefit['icon_bg'] }};">
-                                <svg class="h-5 w-5" style="color:{{ $benefit['icon_clr'] }}"
-                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="mb-1 text-sm font-bold text-foreground">{{ $benefit['title'] }}</h3>
-                                <p class="text-sm leading-relaxed text-muted-foreground">{{ $benefit['desc'] }}</p>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Live Demo Card --}}
-            <div class="flex items-center justify-center">
-                <div class="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-card">
-                    <div class="mb-6 flex items-center justify-between">
-                        <h3 class="text-base font-bold text-foreground">Device Status Preview</h3>
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                            <span class="h-1.5 w-1.5 rounded-full bg-success animate-pulse"></span>
-                            Live
-                        </span>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
-                            <span class="text-sm text-muted-foreground">IMEI</span>
-                            <span class="font-mono text-sm font-semibold text-foreground">352•••••••8901</span>
-                        </div>
-                        <div class="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
-                            <span class="text-sm text-muted-foreground">Status</span>
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                                <span class="h-1.5 w-1.5 rounded-full bg-success"></span>
-                                Active
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
-                            <span class="text-sm text-muted-foreground">Owner</span>
-                            <span class="text-sm font-semibold text-foreground">J••• D•••</span>
-                        </div>
-                        <div class="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
-                            <span class="text-sm text-muted-foreground">Registered</span>
-                            <span class="text-sm font-semibold text-foreground">Mar 2024</span>
-                        </div>
-                    </div>
-
-                    <a href="{{ route('verification') }}"
-                       class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white shadow-soft transition-all hover:shadow-md hover:-translate-y-px"
-                       style="background: #0e7c86;">
-                        Try IMEI Lookup
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
-                        </svg>
+{{-- ═══ CTA with image ══════════════════════════════════ --}}
+@php
+    $ctaTitle = $settings?->cta_title ?? 'Protect your phone today';
+    $ctaSubtitle = $settings?->cta_subtitle ?? 'Register in minutes. If it’s ever lost or stolen, you’ll be glad you did.';
+    $ctaPrimaryLabel = $settings?->cta_primary_label ?? 'Register a device';
+    $ctaPrimaryUrl = $settings?->cta_primary_url ?? route('register-device');
+    $ctaSecondaryLabel = $settings?->cta_secondary_label ?? 'Create free account';
+    $ctaSecondaryUrl = $settings?->cta_secondary_url ?? route('register');
+@endphp
+<section class="container pb-4">
+    <div class="relative overflow-hidden rounded-[2rem] text-white">
+        <img src="{{ asset('images/banners/lost-phone.jpg') }}" alt="" loading="lazy" class="absolute inset-0 h-full w-full object-cover object-right" />
+        <div class="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-primary/30"></div>
+        <div class="relative px-8 py-16 sm:px-14 lg:py-20">
+            <div class="max-w-xl">
+                <h2 class="font-display text-4xl leading-tight sm:text-6xl">{{ $ctaTitle }}</h2>
+                <p class="mt-4 text-lg text-white/80">{{ $ctaSubtitle }}</p>
+                <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+                    <a href="{{ $ctaPrimaryUrl }}" class="btn btn-lg bg-white text-primary shadow-lg hover:bg-white/90">
+                        {{ $ctaPrimaryLabel }} <x-site.icon name="arrow-right" class="h-4 w-4" stroke="2.2" />
                     </a>
+                    @guest
+                        <a href="{{ $ctaSecondaryUrl }}" class="btn btn-lg border border-white/40 text-white hover:bg-white/10">{{ $ctaSecondaryLabel }}</a>
+                    @endguest
                 </div>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-
-{{-- ═══════════════════════════════════════════════
-     CTA
-═══════════════════════════════════════════════ --}}
-<section class="relative overflow-hidden py-10 lg:py-14"
-         style="background: linear-gradient(160deg, #0a1420 0%, #132132 100%);">
-    <div class="absolute inset-0 bg-hero-dots opacity-30 pointer-events-none"></div>
-
-    <div class="container relative z-10">
-        @php
-            $ctaTitle         = $settings?->cta_title          ?? 'Ready to protect your mobile devices?';
-            $ctaSubtitle      = $settings?->cta_subtitle        ?? 'Join thousands of users who trust DRMS for device verification and security. Register today.';
-            $ctaPrimaryLabel  = $settings?->cta_primary_label   ?? 'Register Device';
-            $ctaPrimaryUrl    = $settings?->cta_primary_url     ?? route('register-device');
-            $ctaSecondaryLabel= $settings?->cta_secondary_label ?? 'Sign Up Free';
-            $ctaSecondaryUrl  = $settings?->cta_secondary_url   ?? route('register');
-        @endphp
-
-        <div class="mx-auto max-w-3xl text-center">
-            <div class="mx-auto mb-6 inline-flex items-center justify-center rounded-full border-2 p-4"
-                 style="border-color: #2dd4c8; color: #2dd4c8;">
-                <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/>
-                </svg>
-            </div>
-
-            <h2 class="mb-4 font-display text-3xl font-semibold text-white sm:text-4xl">
-                {{ $ctaTitle }}
-            </h2>
-            <p class="mb-7 text-lg text-slate-300">
-                {{ $ctaSubtitle }}
-            </p>
-
-            <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <a href="{{ $ctaPrimaryUrl }}"
-                   class="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-slate-900 shadow-soft hover:bg-white/90 transition-all hover:-translate-y-px">
-                    {{ $ctaPrimaryLabel }}
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/>
-                    </svg>
-                </a>
-                <a href="{{ $ctaSecondaryUrl }}"
-                   class="btn-ghost-light px-8 py-3.5 text-sm font-semibold">
-                    {{ $ctaSecondaryLabel }}
-                </a>
             </div>
         </div>
     </div>

@@ -9,6 +9,21 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    protected static function booted(): void
+    {
+        // IMEI check results show the owner's name, and devices cascade-delete with the user at DB level.
+        $forgetDevices = function (User $user) {
+            $ids = \Illuminate\Support\Facades\DB::table('devices')
+                ->where('current_owner_id', $user->id)
+                ->get(['imei', 'imei2'])
+                ->flatMap(fn ($d) => [$d->imei, $d->imei2])
+                ->all();
+            \App\Services\ImeiLookup::forget($ids);
+        };
+        static::updated(fn (User $user) => $user->wasChanged('name') && $forgetDevices($user));
+        static::deleting($forgetDevices);
+    }
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 

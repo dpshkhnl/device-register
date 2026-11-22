@@ -1,51 +1,27 @@
 @extends('layouts.app')
 
+@section('title', 'Reset password')
+
 @section('content')
-<section class="py-12 lg:py-16">
-    <div class="container max-w-5xl">
-        <div class="grid overflow-hidden rounded-3xl border border-border bg-card shadow-soft lg:grid-cols-2">
-            <div class="relative hidden bg-muted/40 p-10 lg:block">
-                <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent"></div>
-                <div class="relative z-10 flex h-full flex-col justify-between">
-                    <div>
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                            <svg class="h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
-                            </svg>
-                        </div>
-                        <h1 class="mt-6 text-3xl font-bold text-foreground">Reset your password</h1>
-                        <p class="mt-3 text-sm text-muted-foreground">We will send you a secure password reset link.</p>
-                    </div>
-                    <img src="/images/auth-login.svg" alt="Reset password illustration" class="mt-10 w-full max-w-sm" />
-                </div>
+<div class="container flex min-h-[70vh] items-center justify-center py-14">
+    <div class="surface w-full max-w-md p-8 sm:p-10">
+        <span class="icon-tile h-12 w-12 rounded-2xl bg-accent text-accent-foreground"><x-site.icon name="lock" class="h-6 w-6" /></span>
+        <h1 class="font-display mt-6 text-4xl text-foreground">Forgot your password?</h1>
+        <p class="mt-2 text-sm text-muted-foreground">Enter your account email and we’ll send you a link to choose a new one.</p>
+
+        <form class="mt-8 space-y-5" method="POST" action="{{ route('password.email') }}">
+            @csrf
+            <div>
+                <label class="field-label" for="email">Email</label>
+                <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="name@example.com" class="field-input" />
+                <x-site.error :messages="$errors->get('email')" />
             </div>
-            <div class="p-6 sm:p-10">
-                <div class="space-y-2">
-                    <h2 class="text-2xl font-semibold text-foreground">Forgot password</h2>
-                    <p class="text-sm text-muted-foreground">Enter your email to receive a reset link.</p>
-                </div>
+            <button type="submit" class="btn btn-primary btn-lg w-full">Email me a reset link</button>
+        </form>
 
-                <x-auth-session-status class="mt-4" :status="session('status')" />
-
-                @if ($errors->any())
-                    <div class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                        Please check the email and try again.
-                    </div>
-                @endif
-
-                <form class="mt-6 space-y-4" method="POST" action="{{ route('password.email') }}">
-                    @csrf
-                    <div>
-                        <label class="text-sm font-medium text-foreground" for="email">Email</label>
-                        <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus class="mt-2 h-12 w-full rounded-lg border border-border bg-background px-4 text-sm" />
-                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                    </div>
-                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90">
-                        Email Password Reset Link
-                    </button>
-                </form>
-            </div>
-        </div>
+        <p class="mt-8 text-center text-sm text-muted-foreground">
+            Remembered it? <a href="{{ route('login') }}" class="font-semibold text-primary hover:underline">Back to sign in</a>
+        </p>
     </div>
-</section>
+</div>
 @endsection

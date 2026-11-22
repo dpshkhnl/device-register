@@ -1,31 +1,26 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
+@extends('layouts.app')
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
+@section('title', 'Verify your email')
+
+@section('content')
+<div class="container flex min-h-[70vh] items-center justify-center py-14">
+    <div class="surface w-full max-w-md p-8 text-center sm:p-10">
+        <span class="icon-tile mx-auto h-14 w-14 rounded-2xl bg-accent text-accent-foreground"><x-site.icon name="mail" class="h-7 w-7" /></span>
+        <h1 class="font-display mt-6 text-4xl text-foreground">Check your inbox</h1>
+        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+            Thanks for signing up! Please verify your email by clicking the link we just sent you. Didn’t get it? We can send another.
+        </p>
+
+        <div class="mt-8 flex flex-col gap-3">
+            <form method="POST" action="{{ route('verification.send') }}">
+                @csrf
+                <button type="submit" class="btn btn-primary w-full">Resend verification email</button>
+            </form>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="btn btn-ghost w-full">Log out</button>
+            </form>
         </div>
-    @endif
-
-    <div class="mt-4 flex items-center justify-between">
-        <form method="POST" action="{{ route('verification.send') }}">
-            @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
-            </div>
-        </form>
-
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __('Log Out') }}
-            </button>
-        </form>
     </div>
-</x-guest-layout>
+</div>
+@endsection

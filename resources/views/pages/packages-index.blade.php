@@ -1,79 +1,114 @@
 @extends('layouts.app')
 
+@section('title', 'Plans')
+
 @section('content')
-<section class="relative overflow-hidden bg-background py-14 lg:py-20">
-    <div class="pointer-events-none absolute -left-32 top-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl"></div>
-    <div class="pointer-events-none absolute -right-40 top-24 h-80 w-80 rounded-full bg-emerald-200/40 blur-3xl"></div>
-    <div class="container max-w-6xl">
-        <div class="mb-10 grid gap-6 lg:grid-cols-[1.3fr,0.7fr] lg:items-end">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Pricing</p>
-                <h1 class="mt-3 text-3xl font-semibold text-foreground sm:text-4xl">Choose the plan that fits your device workflow</h1>
-                <p class="mt-3 max-w-2xl text-sm text-muted-foreground">Transparent limits, instant activation, and clear visibility into your IMEI verification and device registration usage.</p>
-            </div>
-            <div class="rounded-2xl border border-border bg-card/80 p-5 shadow-soft">
-                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Why Pricing</p>
-                <p class="mt-2 text-sm text-foreground">Scale verification credits and device limits per project without overcommitting.</p>
-            </div>
+@php
+    $meter = fn ($used, $limit) => $limit > 0 ? min(100, round($used / $limit * 100)) : 0;
+    $activeId = $activePackage?->package_id;
+    $featuredId = $packages->where('is_trial', false)->sortBy('price')->skip(1)->first()?->id
+        ?? $packages->where('is_trial', false)->first()?->id;
+@endphp
+
+<section class="relative overflow-hidden">
+    <div class="bg-site-hero pointer-events-none absolute inset-x-0 top-0 h-[26rem]"></div>
+    <div class="container relative max-w-6xl py-14 lg:py-20">
+        <div class="mx-auto max-w-2xl text-center">
+            <p class="eyebrow">Plans</p>
+            <h1 class="page-title mt-3">Simple plans, clear limits</h1>
+            <p class="page-lead mx-auto">Pick how many devices you want to register and IMEIs you want to check. Activation is instant and you can switch any time.</p>
         </div>
 
-        @if (session('status'))
-            <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {{ session('status') }}
+        @if ($errors->any())
+            <div class="callout callout-danger mx-auto mt-8 max-w-2xl" role="alert">
+                <x-site.icon name="alert" class="mt-px h-5 w-5 shrink-0" />
+                <p>{{ $errors->first() }}</p>
             </div>
         @endif
 
         @if ($activePackage)
-            <div class="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 py-4">
-                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Active Plan</p>
-                <div class="mt-3 flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <p class="text-base font-semibold text-foreground">{{ $activePackage->package->name }}</p>
-                        <p class="text-xs text-muted-foreground">Devices: {{ $activePackage->used_device_count }}/{{ $activePackage->device_limit }} · IMEI checks: {{ $activePackage->used_imei_count }}/{{ $activePackage->imei_limit }}</p>
+            <div class="surface mx-auto mt-10 max-w-3xl p-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="icon-tile bg-emerald-50 text-emerald-700"><x-site.icon name="check-circle" /></span>
+                        <div>
+                            <p class="text-xs font-medium text-muted-foreground">Your current plan</p>
+                            <p class="text-base font-bold text-foreground">{{ $activePackage->package->name }}</p>
+                        </div>
                     </div>
-                    <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Running</span>
+                    @if ($activePackage->ends_at)
+                        <span class="pill pill-neutral pill-plain">Valid until {{ $activePackage->ends_at->format('M d, Y') }}</span>
+                    @endif
+                </div>
+                <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                    @foreach ([
+                        ['label' => 'Devices registered', 'used' => $activePackage->used_device_count, 'limit' => $activePackage->device_limit],
+                        ['label' => 'IMEI checks used', 'used' => $activePackage->used_imei_count, 'limit' => $activePackage->imei_limit],
+                    ] as $usage)
+                        <div>
+                            <div class="mb-1.5 flex justify-between text-xs">
+                                <span class="font-medium text-muted-foreground">{{ $usage['label'] }}</span>
+                                <span class="font-semibold text-foreground">{{ $usage['used'] }} / {{ $usage['limit'] }}</span>
+                            </div>
+                            <div class="meter"><span style="width: {{ $meter($usage['used'], $usage['limit']) }}%"></span></div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         @endif
 
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-12 grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
             @forelse ($packages as $package)
-                <div class="relative flex h-full flex-col rounded-3xl border border-border bg-card p-6 shadow-soft transition hover:-translate-y-1 hover:shadow-lg">
-                    @if ($package->is_trial)
-                        <span class="absolute right-6 top-5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">Trial</span>
+                @php
+                    $isCurrent = $activeId === $package->id;
+                    $isFeatured = ! $activePackage && $featuredId === $package->id;
+                @endphp
+                <div class="relative flex flex-col rounded-3xl border p-7 transition {{ $isFeatured ? 'border-primary bg-card shadow-[0_24px_48px_-24px_hsl(var(--primary)/0.45)] ring-1 ring-primary' : 'surface' }}">
+                    <div class="flex items-center justify-between gap-2">
+                        <h3 class="text-lg font-bold text-foreground">{{ $package->name }}</h3>
+                        @if ($isCurrent)
+                            <span class="pill pill-success">Current</span>
+                        @elseif ($package->is_trial)
+                            <span class="pill pill-primary pill-plain">Free trial</span>
+                        @elseif ($isFeatured)
+                            <span class="pill pill-primary pill-plain">Most popular</span>
+                        @endif
+                    </div>
+                    @if ($package->description)
+                        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ $package->description }}</p>
                     @endif
-                    <div>
-                        <h3 class="text-xl font-semibold text-foreground">{{ $package->name }}</h3>
-                        <p class="mt-2 text-sm text-muted-foreground">{{ $package->description }}</p>
-                    </div>
-                    <div class="mt-6 flex items-end gap-2">
-                        <p class="text-3xl font-semibold text-foreground">{{ number_format($package->price, 2) }}</p>
-                        <span class="pb-1 text-xs text-muted-foreground">per package</span>
-                    </div>
-                    <div class="mt-5 space-y-2 text-sm text-muted-foreground">
-                        <div class="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
-                            <span>Device limit</span>
-                            <span class="font-semibold text-foreground">{{ $package->device_limit }}</span>
-                        </div>
-                        <div class="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
-                            <span>IMEI checks</span>
-                            <span class="font-semibold text-foreground">{{ $package->imei_limit }}</span>
-                        </div>
-                        <div class="flex items-center justify-between rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
-                            <span>Duration</span>
-                            <span class="font-semibold text-foreground">{{ $package->duration_days ? $package->duration_days.' days' : 'No expiry' }}</span>
-                        </div>
-                    </div>
-                    <form method="POST" action="{{ route('packages.purchase', $package) }}" class="mt-6">
-                        @csrf
-                        <button class="inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:bg-primary/90">
-                            Choose plan
-                        </button>
-                    </form>
+
+                    <p class="mt-6 flex items-baseline gap-1.5">
+                        @if ((float) $package->price === 0.0)
+                            <span class="font-display text-5xl text-foreground">Free</span>
+                        @else
+                            <span class="font-display text-5xl text-foreground">{{ number_format($package->price, 2) }}</span>
+                            <span class="text-sm text-muted-foreground">/ package</span>
+                        @endif
+                    </p>
+
+                    <ul class="mt-6 flex-1 space-y-3 text-sm">
+                        <li class="flex items-center gap-3"><x-site.icon name="check" class="h-4 w-4 text-primary" stroke="2.4" /> <span><span class="font-semibold text-foreground">{{ $package->device_limit }}</span> device registrations</span></li>
+                        <li class="flex items-center gap-3"><x-site.icon name="check" class="h-4 w-4 text-primary" stroke="2.4" /> <span><span class="font-semibold text-foreground">{{ $package->imei_limit }}</span> IMEI checks</span></li>
+                        <li class="flex items-center gap-3"><x-site.icon name="check" class="h-4 w-4 text-primary" stroke="2.4" /> <span>{{ $package->duration_days ? 'Valid for '.$package->duration_days.' days' : 'Never expires' }}</span></li>
+                        <li class="flex items-center gap-3"><x-site.icon name="check" class="h-4 w-4 text-primary" stroke="2.4" /> <span>Transfers & lost reports included</span></li>
+                    </ul>
+
+                    @auth
+                        <form method="POST" action="{{ route('packages.purchase', $package) }}" class="mt-8"
+                              @if ($activePackage) data-swal-confirm data-swal-title="{{ $isCurrent ? 'Renew' : 'Switch to' }} {{ $package->name }}?" data-swal-text="Your current plan ends now and {{ $package->name }} starts with fresh limits." data-swal-confirm="{{ $isCurrent ? 'Renew' : 'Switch plan' }}" @endif>
+                            @csrf
+                            <button class="btn w-full {{ $isFeatured ? 'btn-primary' : 'btn-secondary' }}">
+                                {{ $isCurrent ? 'Renew this plan' : ($activePackage ? 'Switch to this plan' : 'Choose plan') }}
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('register') }}" class="btn mt-8 w-full {{ $isFeatured ? 'btn-primary' : 'btn-secondary' }}">Get started</a>
+                    @endauth
                 </div>
             @empty
-                <div class="col-span-full rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-                    No pricing options available right now.
+                <div class="col-span-full rounded-3xl border border-dashed border-border bg-card p-12 text-center text-sm text-muted-foreground">
+                    No plans are available right now. Please check back soon.
                 </div>
             @endforelse
         </div>
